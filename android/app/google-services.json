@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "121401963302",
+    "project_id": "fitsync-app-c93ad",
+    "storage_bucket": "fitsync-app-c93ad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121401963302:android:a8c92a42ef2dce032cc7e7",
+        "android_client_info": {
+          "package_name": "com.fitsync.a"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvUy-z2LB5D-eIgtY5Op85tvJ6AejKg0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121401963302:android:52e29e0c1d6c62ce2cc7e7",
+        "android_client_info": {
+          "package_name": "com.fitsync.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvUy-z2LB5D-eIgtY5Op85tvJ6AejKg0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

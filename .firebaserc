@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "develop": "fitsync-app-c93ad",
+    "default": "workout-recording-app"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}

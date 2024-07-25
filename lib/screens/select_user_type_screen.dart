@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'sign_up_screen.dart';
 
 class SelectUserTypeScreen extends StatelessWidget {
   const SelectUserTypeScreen({super.key});
@@ -33,7 +34,7 @@ class SelectUserTypeScreen extends StatelessWidget {
                   ),
                   Text(
                     'FitSync!',
-                    style: GoogleFonts.pacifico(
+                    style: GoogleFonts.lato(
                       fontSize: 36,
                       fontWeight: FontWeight.w400,
                     ),
@@ -44,7 +45,7 @@ class SelectUserTypeScreen extends StatelessWidget {
             Expanded(
               flex: 3,
               child: Center(
-                child: _buildUserTypeBox(),
+                child: _buildUserTypeBox(context),
               ),
             ),
           ],
@@ -53,7 +54,7 @@ class SelectUserTypeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserTypeBox() {
+  Widget _buildUserTypeBox(BuildContext context) {
     return Container(
       width: 282,
       decoration: BoxDecoration(
@@ -77,9 +78,9 @@ class SelectUserTypeScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 10),
-                _buildUserTypeButton('Trainer'),
+                _buildUserTypeButton('Trainer', context),
                 const SizedBox(height: 15),
-                _buildUserTypeButton('Member'),
+                _buildUserTypeButton('Member', context),
               ],
             ),
           ),
@@ -118,29 +119,39 @@ class SelectUserTypeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserTypeButton(String text) {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+  Widget _buildUserTypeButton(String text, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SignUpScreen(userType: text),
           ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: GoogleFonts.lato(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: GoogleFonts.lato(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
         ),
       ),
