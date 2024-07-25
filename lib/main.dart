@@ -18,6 +18,13 @@ import 'dart:io' show Platform;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  
+  // Firebase 초기화 확인
+  if (!kIsWeb && Firebase.apps.isEmpty) {
+    print("Firebase not initialized. Attempting to initialize...");
+    await Firebase.initializeApp();
+  }
+
   FirebaseFunctions.instance;
   
   // Emulator 설정

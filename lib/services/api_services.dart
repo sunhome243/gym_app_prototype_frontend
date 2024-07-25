@@ -53,7 +53,7 @@ class ApiService {
       if (response.statusCode == 301 || response.statusCode == 302 || response.statusCode == 307) {
         final redirectUrl = response.headers['location'];
         if (redirectUrl != null) {
-  // 추가된 로그
+          print('Redirecting to: $redirectUrl');  // 추가된 로그
           url = Uri.parse(redirectUrl);
           response = await http.post(url, headers: headers, body: jsonEncode(body));
         } else {
@@ -85,7 +85,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemberInfo() async {
-    return await _request('user', 'members/me/', 'GET');
+    return await _request('members/me/', 'GET');
   }
 
   // Add other API methods as needed...
