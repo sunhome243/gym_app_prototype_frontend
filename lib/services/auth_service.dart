@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'api_services.dart';
-import 'dart:convert';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

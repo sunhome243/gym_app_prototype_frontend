@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
+import '../widgets/animated_inkwell.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,7 +12,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 1;  // Default to home icon
   Map<String, dynamic>? _userInfo;
+  bool _isLoading = true;
+  String _errorMessage = '';
+
 
   @override
   void initState() {
@@ -21,45 +25,78 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchUserInfo() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
       final userInfo = await apiService.getMemberInfo();
       setState(() {
         _userInfo = userInfo;
+        _isLoading = false;
       });
+      print(_userInfo); // Debug print to check the fetched data
     } catch (e) {
-      print('Error fetching user info: $e');
+      setState(() {
+        _errorMessage = 'Error fetching user info: $e';
+        _isLoading = false;
+      });
+      print(_errorMessage);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final firstName = user?.displayName?.split(' ').first ?? 'User';
-
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () => _showUserInfoDialog(context),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                color: const Color(0xFF4CD964),
-                child: Text(
-                  'Welcome,\n$firstName',
-                  style: GoogleFonts.lato(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage.isNotEmpty
+                ? Center(child: Text(_errorMessage))
+                : _buildContent(),
+      ),
+      bottomNavigationBar: _buildCustomBottomNavigationBar(),
+    );
+  }
+
+  Widget _buildContent() {
+    final firstName = _userInfo?['first_name'] ?? 'User';
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedInkWell(
+            onTap: () => _showUserInfoDialog(context),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              color: const Color(0xFF4CD964),
+              child: Text(
+                'Welcome,\n$firstName',
+                style: GoogleFonts.lato(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
             ),
-            // ... rest of the build method remains the same
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildRecordsCard(),
+                const SizedBox(height: 20),
+                _buildRecentSessionsCard(),
+                const SizedBox(height: 20),
+                _buildStartSessionButton(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -70,12 +107,10 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('User Information'),
-          content: _userInfo == null
-              ? const CircularProgressIndicator()
-              : Text(
-                  'UID: ${_userInfo!['uid'] ?? 'Unknown'}\n'
-                  'Email: ${_userInfo!['email'] ?? 'Unknown'}\n'
-                  'Role: ${_userInfo!['role'] ?? 'Unknown'}'),
+          content: Text(
+            'UID: ${_userInfo!['uid'] ?? 'Unknown'}\n'
+            'Email: ${_userInfo!['email'] ?? 'Unknown'}\n'
+            'Role: ${_userInfo!['role'] ?? 'Unknown'}'),
           actions: <Widget>[
             TextButton(
               child: const Text('Close'),
@@ -97,85 +132,94 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecordsCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'My Records',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Weekly Workout Progress',
-              style: GoogleFonts.lato(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              height: 100,
-              color: Colors.grey[200],
-              child: Center(
-                child: Text(
-                  'Graph will be implemented here',
-                  style: GoogleFonts.lato(color: Colors.grey[600]),
+    return AnimatedInkWell(
+      onTap: () {
+        // TODO: Implement view all functionality
+      },
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'My Records',
+                style: GoogleFonts.lato(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Implement view all functionality
-                },
-                child: const Text('View All'),
+              Text(
+                'Weekly Workout Progress',
+                style: GoogleFonts.lato(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Container(
+                height: 100,
+                color: Colors.grey[200],
+                child: Center(
+                  child: Text(
+                    'Graph will be implemented here',
+                    style: GoogleFonts.lato(color: Colors.grey[600]),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    // TODO: Implement view all functionality
+                  },
+                  child: const Text('View All'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // TODO: view three most recent sessions
   Widget _buildRecentSessionsCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Most Recent Sessions',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+    return AnimatedInkWell(
+      onTap: () {
+        // TODO: Implement view all functionality
+      },
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Most Recent Sessions',
+                style: GoogleFonts.lato(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            _buildSessionItem('1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
-            _buildSessionItem('2', Colors.green, '2024.01.31', 'Individual Session'),
-            _buildSessionItem('3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Implement view all functionality
-                },
-                child: const Text('View All'),
+              const SizedBox(height: 10),
+              _buildSessionItem('1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
+              _buildSessionItem('2', Colors.green, '2024.01.31', 'Individual Session'),
+              _buildSessionItem('3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    // TODO: Implement view all functionality
+                  },
+                  child: const Text('View All'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -217,32 +261,88 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStartSessionButton() {
-    return ElevatedButton(
-      onPressed: () {
+    return AnimatedInkWell(
+      onTap: () {
         // TODO: Implement start new session functionality
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      splashColor: Colors.white,
+      highlightColor: Colors.white,
+      child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 15),
-      ),
-      child: Text(
-        'Start new Session',
-        style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Center(
+          child: Text(
+            'Start new Session',
+            style: GoogleFonts.lato(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.menu), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-      ],
-      currentIndex: 1,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
+  Widget _buildCustomBottomNavigationBar() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(Icons.menu, 0),
+            _buildNavItem(Icons.home, 1),
+            _buildNavItem(Icons.person, 2),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    final isSelected = _selectedIndex == index;
+    
+    return AnimatedInkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      splashColor: isSelected ? Colors.transparent : Colors.blue.withOpacity(0.1),
+      highlightColor: isSelected ? Colors.transparent : Colors.blue.withOpacity(0.05),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1.0, end: isSelected ? 1.0 : 0.8),
+          duration: const Duration(milliseconds: 200),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: child,
+            );
+          },
+          child: Icon(
+            icon,
+            color: isSelected ? Colors.blue : Colors.grey,
+            size: 28,
+          ),
+        ),
+      ),
     );
   }
 }

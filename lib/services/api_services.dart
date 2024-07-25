@@ -85,7 +85,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getMemberInfo() async {
-    return await _request('members/me/', 'GET');
+    return await _request('user', 'members/me/', 'GET');
   }
 
   // Add other API methods as needed...
