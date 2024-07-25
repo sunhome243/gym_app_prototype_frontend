@@ -17,7 +17,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
 
-
   @override
   void initState() {
     super.initState();
@@ -37,13 +36,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _userInfo = userInfo;
         _isLoading = false;
       });
-      print(_userInfo); // Debug print to check the fetched data
     } catch (e) {
       setState(() {
         _errorMessage = 'Error fetching user info: $e';
         _isLoading = false;
       });
-      print(_errorMessage);
     }
   }
 
@@ -70,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           AnimatedInkWell(
             onTap: () => _showUserInfoDialog(context),
+            splashColor: Colors.white.withOpacity(0.3),
             child: Container(
               padding: const EdgeInsets.all(20),
               color: const Color(0xFF4CD964),
@@ -78,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: GoogleFonts.lato(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -136,8 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         // TODO: Implement view all functionality
       },
+      borderRadius: BorderRadius.circular(12),
       child: Card(
-        elevation: 4,
+        elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -161,7 +160,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               Container(
                 height: 100,
-                color: Colors.grey[200],
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Center(
                   child: Text(
                     'Graph will be implemented here',
@@ -190,8 +192,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         // TODO: Implement view all functionality
       },
+      borderRadius: BorderRadius.circular(12),
       child: Card(
-        elevation: 4,
+        elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -265,8 +268,8 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         // TODO: Implement start new session functionality
       },
-      splashColor: Colors.white,
-      highlightColor: Colors.white,
+      splashColor: Colors.white.withOpacity(0.3),
+      borderRadius: BorderRadius.circular(30),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -278,6 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'Start new Session',
             style: GoogleFonts.lato(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -318,29 +322,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNavItem(IconData icon, int index) {
     final isSelected = _selectedIndex == index;
     
-    return AnimatedInkWell(
+    return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
-      splashColor: isSelected ? Colors.transparent : Colors.blue.withOpacity(0.1),
-      highlightColor: isSelected ? Colors.transparent : Colors.blue.withOpacity(0.05),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 1.0, end: isSelected ? 1.0 : 0.8),
-          duration: const Duration(milliseconds: 200),
-          builder: (context, value, child) {
-            return Transform.scale(
-              scale: value,
-              child: child,
-            );
-          },
-          child: Icon(
-            icon,
-            color: isSelected ? Colors.blue : Colors.grey,
-            size: 28,
-          ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1.0, end: isSelected ? 1.2 : 0.8),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: child,
+          );
+        },
+        child: Icon(
+          icon,
+          color: isSelected ? Colors.blue : Colors.grey,
+          size: 28,
         ),
       ),
     );
