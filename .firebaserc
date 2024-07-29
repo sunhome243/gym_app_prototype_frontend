@@ -1,7 +1,7 @@
 {
   "projects": {
     "develop": "fitsync-app-c93ad",
-    "default": "workout-recording-app"
+    "default": "fitsync-app-c93ad"
   },
   "targets": {},
   "etags": {},
