@@ -156,13 +156,27 @@ class ApiService {
         'initial_sessions': initialSessions,
       });
       
-      if (response.statusCode == 404) {
-        throw Exception('Trainer not found');
-      } else if (response.statusCode != 200) {
-        throw Exception('Failed to add trainer');
+      print("API Response: $response"); // 디버그 로그
+      
+      if (response['id'] != null) {
+        print("Mapping request successful"); // 디버그 로그
+        return; // 성공적으로 처리됨
+      } else {
+        throw Exception('Unexpected response format');
       }
     } catch (e) {
-      rethrow;
+      print("Error in requestTrainerMemberMapping: $e"); // 디버그 로그
+      rethrow; // 예외를 다시 던져서 호출자가 처리할 수 있도록 함
     }
+  }
+
+  Future<void> updateTrainerMemberMappingStatus(int mappingId, String newStatus) async {
+  await _request('user', 'trainer-member-mapping/$mappingId/status', 'PATCH', body: {
+    'new_status': newStatus,
+    });
+  }
+
+  Future<void> removeTrainerMemberMapping(String otherEmail) async {
+    await _request('user', 'trainer-member-mapping/$otherEmail', 'DELETE');
   }
 }

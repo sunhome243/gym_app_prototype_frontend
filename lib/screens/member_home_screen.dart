@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
 import 'all_sessions_screen.dart';
-import 'profile_screen.dart';
+import 'member_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -398,20 +398,23 @@ class _AddTrainerModalState extends State<AddTrainerModal> {
       setState(() => _isLoading = true);
       final apiService = Provider.of<ApiService>(context, listen: false);
       try {
+        print("Attempting to request trainer-member mapping..."); // 디버그 로그
         await apiService.requestTrainerMemberMapping(_trainerEmail, int.parse(_initialSessions));
-        Navigator.pop(context);
+        print("Trainer-member mapping request successful"); // 디버그 로그
+        Navigator.of(context).pop(); // 모달을 닫음
         widget.onTrainerAdded();
-        _showSuccessDialog(); // 성공 시 성공 메시지 보여주기
+        _showSuccessDialog();
       } catch (e) {
+        print("Error occurred: $e"); // 디버그 로그
         String errorMessage;
         if (e.toString().contains('not found')) {
-          errorMessage = 'We couldn\'t find a trainer with that email. 📧 Double-check the address and try again. Let\'s make sure we\'re connecting you with the right fitness guru!';
+          errorMessage = 'We couldn\'t find a trainer with that email. Double-check the address and try again!';
         } else if (e.toString().contains('Mapping already exists and is accepted')) {
-          errorMessage = 'Great news! You\'re already connected with this trainer. 🎉 No need to reconnect. You\'re all set to crush those goals!';
+          errorMessage = 'Great news! You\'re already connected with this trainer. No need to reconnect. You\'re all set to crush those goals!';
         } else if (e.toString().contains('Mapping already exists and is pending')) {
-          errorMessage = 'You\'ve already sent a request to this trainer. 🕒 They\'re probably just warming up before accepting. Hang tight!';
+          errorMessage = 'You\'ve already sent a request to this trainer. They\'re probably just warming up before accepting. Hang tight!';
         } else {
-          errorMessage = 'An unexpected error occurred. ⚠️ Can we try that again?';
+          errorMessage = 'Whoa, where are we? Can we try that again?';
         }
         _showErrorDialog(errorMessage);
       } finally {
@@ -426,18 +429,39 @@ class _AddTrainerModalState extends State<AddTrainerModal> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'High Five! ✋',
-            style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.green[700]),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.green[700], size: 30),
+              const SizedBox(width: 10),
+              Text('Success! 🎉', 
+                style: GoogleFonts.lato(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: Colors.green[700],
+                )
+              ),
+            ],
           ),
-          content: Text(
-            'You\'ve successfully sent a connection request to your trainer! Now, sit tight and maybe do a few stretches. 🧘‍♂️ Your trainer needs to accept the request before you can start logging those gains. We\'ll let you know when they\'re ready to pump you up! 💪',
-            style: GoogleFonts.lato(fontSize: 18, height: 1.5),
+          content: RichText(
+            text: TextSpan(
+              style: GoogleFonts.lato(fontSize: 16, color: Colors.black87, height: 1.5),
+              children: [
+                TextSpan(
+                  text: 'Connection request sent! 💪\n\n',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[700]),
+                ),
+                const TextSpan(text: 'What\'s next?\n'),
+                TextSpan(
+                  text: '• Now, sit tight and maybe do a few stretches. 🧘‍♂️ and wait for trainer acceptance\n\n',
+                  style: TextStyle(color: Colors.blue[700]),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               child: Text(
-                'Awesome!',
+                'Got it!',
                 style: GoogleFonts.lato(
                   color: Colors.green[700],
                   fontWeight: FontWeight.bold,
@@ -518,6 +542,9 @@ class _AddTrainerModalState extends State<AddTrainerModal> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter initial sessions';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return 'Please enter a valid number';
                       }
                       return null;
                     },

@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AnimatedInkWell extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final Color? splashColor;
   final Color? highlightColor;
   final BorderRadius? borderRadius;
   final Duration animationDuration;
 
   const AnimatedInkWell({
-    Key? key,
+    super.key,
     required this.child,
     required this.onTap,
+    this.onLongPress,
     this.splashColor,
     this.highlightColor,
     this.borderRadius,
-    this.animationDuration = const Duration(milliseconds: 300),
-  }) : super(key: key);
+    this.animationDuration = const Duration(milliseconds: 200),
+  });
 
   @override
   _AnimatedInkWellState createState() => _AnimatedInkWellState();
@@ -49,10 +52,19 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
+    _controller.reverse().then((_) {
+      widget.onTap();
+    });
   }
 
   void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  void _handleLongPress() async {
+    await _controller.animateTo(0.90, duration: const Duration(milliseconds: 100));
+    HapticFeedback.mediumImpact();
+    widget.onLongPress?.call();
     _controller.reverse();
   }
 
@@ -62,18 +74,23 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
-      onTap: widget.onTap,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: widget.splashColor ?? Theme.of(context).primaryColor.withOpacity(0.3),
-            highlightColor: widget.highlightColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
-            borderRadius: widget.borderRadius,
-            child: widget.child,
-          ),
-        ),
+      onLongPress: widget.onLongPress != null ? _handleLongPress : null,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                splashColor: widget.splashColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
+                highlightColor: widget.highlightColor ?? Theme.of(context).primaryColor.withOpacity(0.05),
+                borderRadius: widget.borderRadius,
+                child: widget.child,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

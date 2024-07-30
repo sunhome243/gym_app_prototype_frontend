@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/sign_up_screen.dart';
 import 'screens/select_user_type_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/member_home_screen.dart';
 import 'services/auth_service.dart';
 import 'services/api_services.dart';
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart';
+import 'member_home_screen.dart';
+import 'trainer_home_screen.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,13 +13,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-    late final AuthService _auth;
+  late final AuthService _auth;
 
   @override
   void initState() {
     super.initState();
     _auth = Provider.of<AuthService>(context, listen: false);
   }
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -37,8 +39,20 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
+        Map<String, dynamic> userInfo = await _auth.getCurrentUserInfo();
+        String userRole = userInfo['role'];
+
+        Widget homeScreen;
+        if (userRole == 'trainer') {
+          homeScreen = const TrainerHomeScreen();
+        } else if (userRole == 'member') {
+          homeScreen = const HomeScreen();
+        } else {
+          throw Exception('Invalid user role');
+        }
+
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => homeScreen),
         );
       } catch (e) {
         setState(() {

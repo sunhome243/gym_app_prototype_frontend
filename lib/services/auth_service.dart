@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'api_services.dart';
 
 class AuthService {
@@ -17,16 +17,12 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      // Create user in Firebase
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       await userCredential.user?.updateDisplayName('$firstName $lastName');
-
-      // Store user type locally
-      await _storeUserType(userType);
 
       // Create user in backend
       await _apiService.createUser({
@@ -64,7 +60,6 @@ class AuthService {
 
   Future<void> signOut() async {
     await _auth.signOut();
-    await _clearUserType();
   }
 
   Future<String> getIdToken() async {
@@ -73,18 +68,38 @@ class AuthService {
 
   User? get currentUser => _auth.currentUser;
 
-  Future<void> _storeUserType(String userType) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userType', userType);
-  }
+  Future<Map<String, dynamic>> getCurrentUserInfo() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user currently signed in');
+    }
 
-  Future<String?> getUserType() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userType');
-  }
+    String? idToken = await user.getIdToken();
+    if (idToken == null) {
+      throw Exception('Failed to get ID token');
+    }
 
-  Future<void> _clearUserType() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('userType');
+    Map<String, dynamic> decodedToken;
+    try {
+      decodedToken = JwtDecoder.decode(idToken);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error decoding JWT: $e');
+      }
+      throw Exception('Failed to decode ID token');
+    }
+
+    String role = decodedToken['role'] as String? ?? 'unknown';
+    if (role == 'unknown' && kDebugMode) {
+      print('Warning: User role not found in token');
+    }
+
+    return {
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'first_name': decodedToken['first_name'] as String? ?? user.displayName?.split(' ').first ?? '',
+      'last_name': decodedToken['last_name'] as String? ?? user.displayName?.split(' ').last ?? '',
+      'role': role.toLowerCase(),
+    };
   }
 }
