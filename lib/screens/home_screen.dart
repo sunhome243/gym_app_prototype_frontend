@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
+import 'all_sessions_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,14 +50,28 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage.isNotEmpty
-                ? Center(child: Text(_errorMessage))
-                : _buildContent(),
+        child: _getSelectedScreen(),
       ),
       bottomNavigationBar: _buildCustomBottomNavigationBar(),
     );
+  }
+
+  Widget _getSelectedScreen() {
+    switch (_selectedIndex) {
+      case 0:
+        // TODO: Implement menu screen
+        return const Center(child: Text('Menu Screen'));
+      case 1:
+        return _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage.isNotEmpty
+                ? Center(child: Text(_errorMessage))
+                : _buildContent();
+      case 2:
+        return const ProfileScreen();
+      default:
+        return _buildContent();
+    }
   }
 
   Widget _buildContent() {
@@ -190,7 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRecentSessionsCard() {
     return AnimatedInkWell(
       onTap: () {
-        // TODO: Implement view all functionality
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+        );
       },
       borderRadius: BorderRadius.circular(12),
       child: Card(
@@ -210,13 +229,16 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 10),
               _buildSessionItem('1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
-              _buildSessionItem('2', Colors.green, '2024.01.31', 'Individual Session'),
+              _buildSessionItem('2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
               _buildSessionItem('3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Implement view all functionality
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+                    );
                   },
                   child: const Text('View All'),
                 ),
