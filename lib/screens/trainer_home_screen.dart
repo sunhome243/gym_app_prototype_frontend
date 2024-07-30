@@ -7,6 +7,7 @@ import '../widgets/animated_inkwell.dart';
 import '../widgets/animated_modal_button.dart';
 import 'member_profile_screen.dart';
 import 'package:shimmer/shimmer.dart';
+import '../widgets/custom_modal.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
   const TrainerHomeScreen({super.key});
@@ -232,23 +233,21 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
 
   Widget _buildAddMemberButton() {
     return AnimatedInkWell(
-      onTap: _toggleAddMemberCard,
+      onTap: _showAddMemberModal,
       borderRadius: BorderRadius.circular(10),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+          Container(
             height: 60,
             width: 60,
-            decoration: BoxDecoration(
-              color: _showAddMemberCard ? Colors.red : Colors.blue,
+            decoration: const BoxDecoration(
+              color: Colors.blue,
               shape: BoxShape.circle,
             ),
-            child: Center(
+            child: const Center(
               child: Icon(
-                _showAddMemberCard ? Icons.close : Icons.add,
+                Icons.add,
                 color: Colors.white,
                 size: 30,
               ),
@@ -256,7 +255,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
           ),
           const SizedBox(height: 8),
           Text(
-            _showAddMemberCard ? 'Close' : 'Add',
+            'Add',
             style: GoogleFonts.lato(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -266,6 +265,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
       ),
     );
   }
+
 
   Widget _buildMemberAvatar(dynamic member) {
     final bool isPending = member['status'] == 'pending';
@@ -358,93 +358,56 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
 
 
 
-  Widget _buildContent() {
-    final firstName = _trainerInfo?['first_name'] ?? 'Trainer';
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AnimatedInkWell(
-            onTap: () => _showTrainerInfoDialog(context),
-            splashColor: Colors.white.withOpacity(0.3),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              color: Colors.blue,
-              child: Text(
-                'Welcome,\n$firstName',
-                style: GoogleFonts.lato(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+Widget _buildContent() {
+  final firstName = _trainerInfo?['first_name'] ?? 'Trainer';
+  return SingleChildScrollView(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AnimatedInkWell(
+          onTap: () => _showTrainerInfoDialog(context),
+          splashColor: Colors.white.withOpacity(0.3),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            color: Colors.blue,
+            child: Text(
+              'Welcome,\n$firstName',
+              style: GoogleFonts.lato(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildMyMembersCard(),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  child: _showAddMemberCard ? _buildAddMemberCard() : const SizedBox.shrink(),
-                ),
-                const SizedBox(height: 20),
-                AnimatedOpacity(
-                  opacity: _showAddMemberCard ? 0.3 : 1.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: IgnorePointer(
-                    ignoring: _showAddMemberCard,
-                    child: _buildMembersProgressCard(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                AnimatedOpacity(
-                  opacity: _showAddMemberCard ? 0.3 : 1.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: IgnorePointer(
-                    ignoring: _showAddMemberCard,
-                    child: _buildStartSessionButton(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _toggleAddMemberCard() {
-    setState(() {
-      _showAddMemberCard = !_showAddMemberCard;
-    });
-  }
-
-  Widget _buildAddMemberCard() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Card(
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Add New Member',
-                style: GoogleFonts.lato(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
+              _buildMyMembersCard(),
               const SizedBox(height: 20),
+              _buildMembersProgressCard(),
+              const SizedBox(height: 20),
+              _buildStartSessionButton(),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  void _showAddMemberModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Add New Member',
+          icon: Icons.person_add,
+          iconColor: Colors.blue,
+          content: Column(
+            children: [
               _buildAnimatedTextField(
                 controller: _emailController,
                 label: 'Member Email',
@@ -457,28 +420,35 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
                 icon: Icons.fitness_center,
                 keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _addMember,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  'Add Member',
-                  style: GoogleFonts.lato(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
-        ),
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: GoogleFonts.lato(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _addMember();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'Add Member',
+                style: GoogleFonts.lato(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -549,222 +519,183 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> with SingleTicker
     }
   }
 
-    void _showSuccessDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Icon(Icons.check_circle_outline, color: Colors.green[700], size: 30),
-              const SizedBox(width: 10),
-              Text('Success! 🎉', 
-                style: GoogleFonts.lato(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Colors.green[700],
-                )
+void _showSuccessDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomModal(
+        title: 'Success! 🎉',
+        icon: Icons.check_circle_outline,
+        iconColor: Colors.green[700],
+        titleColor: Colors.green[700],
+        content: Text(
+          message,
+          style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              'Got it!',
+              style: GoogleFonts.lato(
+                color: Colors.green[700],
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-            ],
-          ),
-          content: Text(
-            message,
-            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Got it!',
-                style: GoogleFonts.lato(
-                  color: Colors.green[700],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
             ),
-          ],
-        );
-      },
-    );
-  }
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-    void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Oops! ',
-                  style: GoogleFonts.lato(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.amber[700],
-                  ),
-                ),
-                const TextSpan(
-                  text: '🙈',
-                  style: TextStyle(fontSize: 24),
-                ),
-              ],
-            ),
-          ),
-          content: Text(
-            message,
-            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Got it!',
-                style: GoogleFonts.lato(
-                  color: Colors.blue[700],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+void _showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomModal(
+        title: 'Oops! 🙈',
+        icon: Icons.error_outline,
+        iconColor: Colors.amber[700],
+        titleColor: Colors.amber[700],
+        content: Text(
+          message,
+          style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              'Got it!',
+              style: GoogleFonts.lato(
+                color: Colors.blue[700],
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              onPressed: () => Navigator.of(context).pop(),
             ),
-          ],
-        );
-      },
-    );
-  }
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void _showApprovalModal(dynamic member) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            '🤔 New Member Alert!',
-            style: GoogleFonts.lato(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+void _showDeleteConfirmationModal(dynamic member) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomModal(
+        title: 'Remove Member',
+        icon: Icons.warning,
+        iconColor: Colors.red,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Are you sure you want to remove ${member['member_first_name']} from your member list?',
+              style: GoogleFonts.lato(fontSize: 16),
+              textAlign: TextAlign.center,
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${member['member_first_name']} wants to join your fitness squad!',
-                style: GoogleFonts.lato(fontSize: 16),
-                textAlign: TextAlign.center,
+            const SizedBox(height: 20),
+            Text(
+              'This action cannot be undone!',
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
               ),
-              const SizedBox(height: 20),
-              Text(
-                'Ready to welcome them to the gains train?',
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                AnimatedModalButton(
-                  onTap: () => Navigator.pop(context),
-                  text: 'Not Now',
-                  icon: Icons.timer,
-                  color: Colors.grey,
-                ),
-                AnimatedModalButton(
-                  onTap: () async {
-                    final apiService = Provider.of<ApiService>(context, listen: false);
-                    if (member['mapping_id'] != null) {
-                      await apiService.updateTrainerMemberMappingStatus(member['mapping_id'], 'accepted');
-                      Navigator.pop(context);
-                      _fetchMembers(); // Refresh the member list
-                    } else {
-                      print('Error: mapping id is null');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('An error occurred. Please try again.')),
-                      );
-                    }
-                  },
-                  text: 'Let\'s Go! 💪',
-                  icon: Icons.check_circle_outline,
-                  color: Colors.green,
-                ),
-              ],
+              textAlign: TextAlign.center,
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.lato(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final apiService = Provider.of<ApiService>(context, listen: false);
+              await apiService.removeTrainerMemberMapping(member['member_email']);
+              Navigator.pop(context);
+              _fetchMembers();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            ),
+            child: Text(
+              'Remove',
+              style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void _showDeleteConfirmationModal(dynamic member) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            '🚫 Remove Member',
-            style: GoogleFonts.lato(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+void _showApprovalModal(dynamic member) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomModal(
+        title: 'New Member Alert!',
+        icon: Icons.person_add,
+        iconColor: Colors.blue,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${member['member_first_name']} wants to join your fitness squad!',
+              style: GoogleFonts.lato(fontSize: 16),
+              textAlign: TextAlign.center,
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Are you sure you want to remove ${member['member_first_name']} from your member list?',
-                style: GoogleFonts.lato(fontSize:16),
-                textAlign: TextAlign.center,
+            const SizedBox(height: 20),
+            Text(
+              'Ready to welcome them to the gains train?',
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 20),
-              Text(
-                'This action cannot be undone!',
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                AnimatedModalButton(
-                  onTap: () => Navigator.pop(context),
-                  text: 'Cancel',
-                  icon: Icons.cancel_outlined,
-                  color: Colors.grey,
-                ),
-                AnimatedModalButton(
-                  onTap: () async {
-                    final apiService = Provider.of<ApiService>(context, listen: false);
-                    await apiService.removeTrainerMemberMapping(member['member_email']);
-                    Navigator.pop(context);
-                    _fetchMembers(); // Refresh the member list
-                  },
-                  text: 'Remove',
-                  icon: Icons.delete_forever,
-                  color: Colors.red,
-                ),
-              ],
+              textAlign: TextAlign.center,
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Not Now', style: GoogleFonts.lato(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final apiService = Provider.of<ApiService>(context, listen: false);
+              if (member['mapping_id'] != null) {
+                await apiService.updateTrainerMemberMappingStatus(member['mapping_id'], 'accepted');
+                Navigator.pop(context);
+                _fetchMembers();
+              } else {
+                print('Error: mapping id is null');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('An error occurred. Please try again.')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            ),
+            child: Text(
+              'Let\'s Go! 💪',
+              style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Widget _buildMembersProgressCard() {
     return AnimatedInkWell(
