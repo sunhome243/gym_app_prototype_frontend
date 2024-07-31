@@ -5,6 +5,8 @@ import '../services/api_services.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../widgets/info_tooltip.dart';
 import '../widgets/animated_inkwell.dart';
+import 'member_home_screen.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -75,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     });
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -398,14 +400,14 @@ class _AddTrainerModalState extends State<AddTrainerModal> {
       setState(() => _isLoading = true);
       final apiService = Provider.of<ApiService>(context, listen: false);
       try {
-        print("Attempting to request trainer-member mapping..."); // 디버그 로그
+        print("Attempting to request trainer-member mapping...");
         await apiService.requestTrainerMemberMapping(_trainerEmail, int.parse(_initialSessions));
-        print("Trainer-member mapping request successful"); // 디버그 로그
-        Navigator.of(context).pop(); // 모달을 닫음
+        print("Trainer-member mapping request successful");
+        Navigator.of(context).pop();
         widget.onTrainerAdded();
         _showSuccessDialog();
       } catch (e) {
-        print("Error occurred: $e"); // 디버그 로그
+        print("Error occurred: $e");
         String errorMessage;
         if (e.toString().contains('not found')) {
           errorMessage = 'We couldn\'t find a trainer with that email. Double-check the address and try again!';
@@ -435,8 +437,7 @@ class _AddTrainerModalState extends State<AddTrainerModal> {
               const SizedBox(width: 10),
               Text('Success! 🎉', 
                 style: GoogleFonts.lato(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  fontWeight: FontWeight.bold,fontSize: 24,
                   color: Colors.green[700],
                 )
               ),

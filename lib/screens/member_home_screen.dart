@@ -14,7 +14,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 1;  // Default to home icon
   Map<String, dynamic>? _userInfo;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -50,28 +49,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _getSelectedScreen(),
-      ),
-      bottomNavigationBar: _buildCustomBottomNavigationBar(),
-    );
-  }
-
-  Widget _getSelectedScreen() {
-    switch (_selectedIndex) {
-      case 0:
-        // TODO: Implement menu screen
-        return const Center(child: Text('Menu Screen'));
-      case 1:
-        return _isLoading
+        child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage.isNotEmpty
                 ? Center(child: Text(_errorMessage))
-                : _buildContent();
-      case 2:
-        return const ProfileScreen();
-      default:
-        return _buildContent();
-    }
+                : _buildContent(),
+      ),
+    );
   }
 
   Widget _buildContent() {
@@ -121,10 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('User Information'),
-          content: Text(
-            'UID: ${_userInfo!['uid'] ?? 'Unknown'}\n'
-            'Email: ${_userInfo!['email'] ?? 'Unknown'}\n'
-            'Role: ${_userInfo!['role'] ?? 'Unknown'}'),
+          content: Text('UID: ${_userInfo!['uid'] ?? 'Unknown'}\n'
+              'Email: ${_userInfo!['email'] ?? 'Unknown'}\n'
+              'Role: ${_userInfo!['role'] ?? 'Unknown'}'),
           actions: <Widget>[
             TextButton(
               child: const Text('Close'),
@@ -228,16 +211,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildSessionItem('1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
-              _buildSessionItem('2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
-              _buildSessionItem('3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
+              _buildSessionItem(
+                  '1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
+              _buildSessionItem(
+                  '2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
+              _buildSessionItem(
+                  '3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const AllSessionsScreen()),
                     );
                   },
                   child: const Text('View All'),
@@ -250,7 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSessionItem(String number, Color color, String date, String title) {
+  Widget _buildSessionItem(
+      String number, Color color, String date, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -265,7 +253,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(
               child: Text(
                 number,
-                style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold),
+                style: GoogleFonts.lato(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -274,8 +263,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(date, style: GoogleFonts.lato(color: Colors.grey[600], fontSize: 12)),
-                Text(title, style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+                Text(date,
+                    style: GoogleFonts.lato(
+                        color: Colors.grey[600], fontSize: 12)),
+                Text(title,
+                    style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -313,55 +305,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCustomBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, -1),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.menu, 0),
-            _buildNavItem(Icons.home, 1),
-            _buildNavItem(Icons.person, 2),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, int index) {
-    final isSelected = _selectedIndex == index;
-    
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 1.0, end: isSelected ? 1.2 : 0.8),
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        builder: (context, value, child) {
-          return Transform.scale(
-            scale: value,
-            child: child,
-          );
-        },
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.blue : Colors.grey,
-          size: 28,
-        ),
-      ),
-    );
+  void _handleNavigation(int index) {
+    switch (index) {
+      case 0:
+        // Navigate to menu screen
+        // TODO: Implement menu screen navigation
+        break;
+      case 1:
+        // Stay on home screen
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+        break;
+    }
   }
 }

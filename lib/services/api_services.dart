@@ -144,9 +144,9 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getMyMappings() async {
+  Future<List<Map<String, dynamic>>> getMyMappings() async {
     final response = await _request('user', 'my-mappings/', 'GET');
-    return response as List<dynamic>;
+    return List<Map<String, dynamic>>.from(response);
   }
 
   Future<void> requestTrainerMemberMapping(String trainerEmail, int initialSessions) async {
@@ -176,7 +176,15 @@ class ApiService {
     });
   }
 
+  Future<int> getRemainingSessionsForMember(String memberEmail) async {
+    final response = await _request('user', 'trainer-member-mapping/$memberEmail/sessions', 'GET');
+    return response['remaining_sessions'] as int;
+  }
+
+
   Future<void> removeTrainerMemberMapping(String otherEmail) async {
     await _request('user', 'trainer-member-mapping/$otherEmail', 'DELETE');
   }
 }
+
+

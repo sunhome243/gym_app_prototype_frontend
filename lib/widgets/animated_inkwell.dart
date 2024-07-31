@@ -3,23 +3,23 @@ import 'package:flutter/services.dart';
 
 class AnimatedInkWell extends StatefulWidget {
   final Widget child;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+  final VoidCallback? onTap;
+  final Function(Offset)? onLongPress;
   final Color? splashColor;
   final Color? highlightColor;
   final BorderRadius? borderRadius;
   final Duration animationDuration;
 
   const AnimatedInkWell({
-    super.key,
+    Key? key,
     required this.child,
-    required this.onTap,
+    this.onTap,
     this.onLongPress,
     this.splashColor,
     this.highlightColor,
     this.borderRadius,
     this.animationDuration = const Duration(milliseconds: 200),
-  });
+  }) : super(key: key);
 
   @override
   _AnimatedInkWellState createState() => _AnimatedInkWellState();
@@ -52,19 +52,22 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _controller.reverse().then((_) {
-      widget.onTap();
-    });
+    _controller.reverse();
   }
 
   void _handleTapCancel() {
     _controller.reverse();
   }
 
-  void _handleLongPress() async {
-    await _controller.animateTo(0.90, duration: const Duration(milliseconds: 100));
+  void _handleLongPressStart(LongPressStartDetails details) {
+    _controller.forward();
     HapticFeedback.mediumImpact();
-    widget.onLongPress?.call();
+    if (widget.onLongPress != null) {
+      widget.onLongPress!(details.globalPosition);
+    }
+  }
+
+  void _handleLongPressEnd(LongPressEndDetails details) {
     _controller.reverse();
   }
 
@@ -74,7 +77,9 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
-      onLongPress: widget.onLongPress != null ? _handleLongPress : null,
+      onLongPressStart: _handleLongPressStart,
+      onLongPressEnd: _handleLongPressEnd,
+      onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
