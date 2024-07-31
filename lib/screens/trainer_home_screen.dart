@@ -4,11 +4,12 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
-import 'member_profile_screen.dart'; // Assuming this import is correct
+import 'member_profile_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/custom_menu.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import '../widgets/background.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
   const TrainerHomeScreen({super.key});
@@ -38,6 +39,10 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     super.initState();
     _fetchTrainerInfo();
     _fetchMembers();
+    _initializeAnimations();
+  }
+
+  void _initializeAnimations() {
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -100,50 +105,141 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final gradientHeight = screenHeight / 3;
+
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            _getSelectedScreen(),
-            if (_isExpanded)
-              Positioned(
-                bottom: 20,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_up,
-                        color: Colors.blue, size: 30),
-                    onPressed: _toggleExpand,
-                  ),
-                ),
-              ),
-          ],
-        ),
+      body: Background(
+        height: gradientHeight,
+        colors: const [Color(0xFF6EB6FF), Colors.white],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage.isNotEmpty
+                ? Center(child: Text(_errorMessage))
+                : _buildContent(),
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        items: _navItems,
-        currentIndex: _selectedIndex,
-        onIndexChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _buildStartSessionButton(),
+          ),
+          CustomBottomNavBar(
+            items: _navItems,
+            currentIndex: _selectedIndex,
+            onIndexChanged: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _getSelectedScreen() {
-    switch (_selectedIndex) {
-      case 0:
-        return const Center(child: Text('Menu Screen'));
-      case 1:
-        return _buildContent();
-      case 2:
-        return const MemberProfileScreen();
-      default:
-        return _buildContent();
+  Widget _buildContent() {
+    return Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildMyMembersCard(),
+                  const SizedBox(height: 20),
+                  _buildMembersProgressCard(),
+                  const SizedBox(height: 100), // Space for the fixed button
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
     }
+  }
+
+  String _getMotivationalPhrase() {
+    final phrases = [
+      "Ready to inspire?",
+      "Time to change lives!",
+      "Let's make progress happen!",
+      "Your expertise matters today!",
+      "Another day to create champions!",
+    ];
+    return phrases[DateTime.now().microsecond % phrases.length];
+  }
+
+  Widget _buildHeader() {
+    final firstName = _trainerInfo?['first_name'] ?? 'Trainer';
+    final greeting = _getGreeting();
+    final motivationalPhrase = _getMotivationalPhrase();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, $firstName!',
+                  style: GoogleFonts.lato(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  motivationalPhrase,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AnimatedInkWell(
+            onTap: () {
+              // TODO: Implement notification functionality
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.black,
+                size: 28,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildMyMembersCard() {
@@ -173,7 +269,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                       ),
                       IconButton(
                         icon: const Icon(Icons.keyboard_arrow_right,
-                            color: Colors.blue),
+                            color: Color(0xFF6EB6FF)),
                         onPressed: () {
                           // TODO: Navigate to trainer_manage_members screen
                           print('Navigate to trainer_manage_members screen');
@@ -221,7 +317,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                       _isExpanded
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: Colors.blue,
+                      color: const Color(0xFF6EB6FF),
                       size: 30,
                     ),
                     onPressed: _toggleExpand,
@@ -265,21 +361,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
           child: _buildMemberAvatar(_members[index + 3]),
         );
       },
-    );
-  }
-
-  Widget _buildMemberListItem(dynamic member) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.blue,
-        child: Text(
-          '${member['member_first_name'][0]}${member['member_last_name'][0]}',
-          style: GoogleFonts.lato(color: Colors.white),
-        ),
-      ),
-      title:
-          Text('${member['member_first_name']} ${member['member_last_name']}'),
-      subtitle: Text(member['status']),
     );
   }
 
@@ -358,9 +439,8 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
   Widget _buildAddMemberButton() {
     return AnimatedInkWell(
       onTap: _showAddMemberModal,
-      // Remove the onLongPress property
       borderRadius: BorderRadius.circular(30),
-      enableTapFeedback: true,
+      enableFeedback: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -368,7 +448,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
             width: 60,
             height: 60,
             decoration: const BoxDecoration(
-              color: Colors.blue,
+              color: Color(0xFF6EB6FF),
               shape: BoxShape.circle,
             ),
             child: const Center(
@@ -435,11 +515,11 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
         }
       },
       onLongPress: (Offset tapPosition) {
-        _showDeleteMenu(member, tapPosition);
+        _showDeleteMenu(context, member, tapPosition);
       },
-      splashColor: Colors.blue.withOpacity(0.3),
+      splashColor: const Color(0xFF6EB6FF).withOpacity(0.3),
       borderRadius: BorderRadius.circular(30),
-      enableTapFeedback: true,
+      enableFeedback: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -452,8 +532,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
+                  boxShadow: [BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
@@ -466,7 +545,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                     style: GoogleFonts.lato(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF3F51B5),
+                      color: const Color(0xFF6EB6FF),
                     ),
                   ),
                 ),
@@ -491,7 +570,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
           Text(
             '${member['member_first_name']} ${member['member_last_name']}',
             style: GoogleFonts.lato(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.bold,
               color: const Color(0xFF424242),
             ),
@@ -513,7 +592,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     );
   }
 
-  void _showDeleteMenu(dynamic member, Offset tapPosition) {
+  void _showDeleteMenu(BuildContext context, dynamic member, Offset tapPosition) {
     showCustomMenu(
       context,
       tapPosition,
@@ -522,8 +601,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
           icon: Icons.delete_outline,
           text: 'Remove',
           onTap: () {
-            _showDeleteConfirmationModal(member);
-            setState(() {});
+            _showDeleteConfirmationModal(context, member);
           },
           color: Colors.red,
         ),
@@ -531,48 +609,10 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     );
   }
 
-  Widget _buildContent() {
-    final firstName = _trainerInfo?['first_name'] ?? 'User';
-
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            color: const Color(0xFF4CD964),
-            child: Text(
-              'Welcome,\n$firstName',
-              style: GoogleFonts.lato(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildMyMembersCard(),
-                const SizedBox(height: 20),
-                _buildMembersProgressCard(),
-                const SizedBox(height: 20),
-                _buildStartSessionButton(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteConfirmationModal(dynamic member) {
+  void _showDeleteConfirmationModal(BuildContext context, dynamic member) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return CustomModal(
           title: 'Remove Member',
           icon: Icons.warning,
@@ -600,17 +640,13 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
           actions: [
             CustomModalAction(
               text: 'Cancel',
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             CustomModalAction(
               text: 'Remove',
               onPressed: () async {
-                final apiService =
-                    Provider.of<ApiService>(context, listen: false);
-                await apiService
-                    .removeTrainerMemberMapping(member['member_email']);
-                Navigator.pop(context);
-                _fetchMembers();
+                Navigator.of(dialogContext).pop();
+                await _removeMember(member);
               },
               isDefaultAction: true,
             ),
@@ -620,258 +656,64 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     );
   }
 
-  void _showAddMemberModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'Add New Member',
-          icon: Icons.person_add,
-          theme: CustomModalTheme.blue,
-          content: Column(
-            children: [
-              _buildTextField(
-                controller: _emailController,
-                label: 'Member Email',
-                icon: Icons.email,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _sessionsController,
-                label: 'Initial Sessions',
-                icon: Icons.fitness_center,
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'Cancel',
-              onPressed: () => Navigator.pop(context),
-            ),
-            CustomModalAction(
-              text: 'Add Member',
-              onPressed: () {
-                Navigator.pop(context);
-                _addMember();
-              },
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.blue),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _addMember() async {
-    final apiService = Provider.of<ApiService>(context, listen: false);
+  Future<void> _removeMember(dynamic member) async {
     try {
-      await apiService.requestTrainerMemberMapping(
-        _emailController.text,
-        int.parse(_sessionsController.text),
-      );
-      _showSuccessDialog('Member request sent successfully');
-      _emailController.clear();
-      _sessionsController.clear();
-      _animationController.reverse();
-      _fetchMembers(); // Refresh the member list
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      await apiService.removeTrainerMemberMapping(member['member_email']);
+      await _fetchMembers();
+      _showSuccessDialog(context, 'Member removed successfully');
     } catch (e) {
-      String errorMessage;
-      if (e.toString().contains('not found')) {
-        errorMessage =
-            'We couldn\'t find a member with that email. Double-check the address and try again!';
-      } else if (e
-          .toString()
-          .contains('Mapping already exists and is accepted')) {
-        errorMessage =
-            'Great news! You\'re already connected with this member. No need to reconnect. You\'re all set to start training!';
-      } else if (e
-          .toString()
-          .contains('Mapping already exists and is pending')) {
-        errorMessage =
-            'You\'ve already sent a request to this member. They\'re probably just warming up before accepting. Hang tight!';
-      } else {
-        errorMessage = 'Whoa, where are we? Can we try that again?';
-      }
-      _showErrorDialog(errorMessage);
+      _showErrorDialog(context, 'Failed to remove member: $e');
     }
   }
 
-  void _showSuccessDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'Success',
-          icon: Icons.check_circle_outline,
-          theme: CustomModalTheme.blue,
-          content: Text(
-            message,
-            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'OK',
-              onPressed: () => Navigator.of(context).pop(),
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'Error',
-          icon: Icons.error_outline,
-          theme: CustomModalTheme.red,
-          content: Text(
-            message,
-            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'OK',
-              onPressed: () => Navigator.of(context).pop(),
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showApprovalModal(dynamic member) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CustomModal(
-          title: 'New Member Request',
-          icon: Icons.person_add,
-          theme: CustomModalTheme.blue,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${member['member_first_name']} ${member['member_last_name']} wants to join your fitness squad!',
-                style: GoogleFonts.lato(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Ready to welcome them to the gains train?',
-                style: GoogleFonts.lato(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'Not Now',
-              onPressed: () => Navigator.pop(context),
-            ),
-            CustomModalAction(
-              text: 'Accept',
-              onPressed: () async {
-                final apiService =
-                    Provider.of<ApiService>(context, listen: false);
-                if (member['mapping_id'] != null) {
-                  await apiService.updateTrainerMemberMappingStatus(
-                      member['mapping_id'], 'accepted');
-                  Navigator.pop(context);
-                  _fetchMembers();
-                  _showSuccessDialog('New member added successfully!');
-                } else {
-                  _showErrorDialog('An error occurred. Please try again.');
-                }
-              },
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildMembersProgressCard() {
-    return AnimatedInkWell(
-      onTap: () {
-        // TODO: Implement view all progress functionality
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Members\' Progress',
-                style: GoogleFonts.lato(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Members\' Progress',
+              style: GoogleFonts.lato(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'Weekly Progress Overview',
+              style: GoogleFonts.lato(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 150,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  'Progress chart will be implemented here',
+                  style: GoogleFonts.lato(color: Colors.grey[600]),
                 ),
               ),
-              const SizedBox(height: 10),
-              Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    'Progress chart will be implemented here',
-                    style: GoogleFonts.lato(color: Colors.grey[600]),
-                  ),
-                ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  // TODO: Implement view all progress functionality
+                },
+                child: const Text('View All'),
               ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: Implement view all progress functionality
-                  },
-                  child: const Text('View All'),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -905,6 +747,212 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     );
   }
 
+  void _showAddMemberModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Add New Member',
+          icon: Icons.person_add,
+          theme: CustomModalTheme.blue,
+          content: Column(
+            children: [
+              _buildTextField(
+                controller: _emailController,
+                label: 'Member Email',
+                icon: Icons.email,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _sessionsController,
+                label: 'Initial Sessions',
+                icon: Icons.fitness_center,
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            CustomModalAction(
+              text: 'Cancel',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            CustomModalAction(
+              text: 'Add Member',
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addMember();
+              },
+              isDefaultAction: true,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF6EB6FF)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF6EB6FF), width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF6EB6FF), width: 2),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addMember() async {
+    final apiService = Provider.of<ApiService>(context, listen: false);
+    try {
+      await apiService.requestTrainerMemberMapping(
+        _emailController.text,
+        int.parse(_sessionsController.text),
+      );
+      _showSuccessDialog(context, 'Member request sent successfully');
+      _emailController.clear();
+      _sessionsController.clear();
+      _animationController.reverse();
+      _fetchMembers(); // Refresh the member list
+    } catch (e) {
+      String errorMessage;
+      if (e.toString().contains('not found')) {
+        errorMessage =
+            'We couldn\'t find a member with that email. Double-check the address and try again!';
+      } else if (e
+          .toString()
+          .contains('Mapping already exists and is accepted')) {
+        errorMessage =
+            'Great news! You\'re already connected with this member. No need to reconnect. You\'re all set to start training!';
+      } else if (e
+          .toString()
+          .contains('Mapping already exists and is pending')) {
+        errorMessage =
+            'You\'ve already sent a request to this member. They\'re probably just warming up before accepting. Hang tight!';
+      } else {
+        errorMessage = 'Whoa, where are we? Can we try that again?';
+      }
+      _showErrorDialog(context, errorMessage);
+    }
+  }
+
+  void _showSuccessDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return CustomModal(
+          title: 'Success',
+          icon: Icons.check_circle_outline,
+          theme: CustomModalTheme.green,
+          content: Text(
+            message,
+            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            CustomModalAction(
+              text: 'OK',
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              isDefaultAction: true,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return CustomModal(
+          title: 'Error',
+          icon: Icons.error_outline,
+          theme: CustomModalTheme.red,
+          content: Text(
+            message,
+            style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            CustomModalAction(
+              text: 'OK',
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              isDefaultAction: true,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showApprovalModal(dynamic member) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return CustomModal(
+          title: 'New Member Request',
+          icon: Icons.person_add,
+          theme: CustomModalTheme.blue,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${member['member_first_name']} ${member['member_last_name']} wants to join your fitness squad!',
+                style: GoogleFonts.lato(fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Ready to welcome them to the gains train?',
+                style: GoogleFonts.lato(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            CustomModalAction(
+              text: 'Not Now',
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            CustomModalAction(
+              text: 'Accept',
+              onPressed: () async {
+                final apiService =
+                    Provider.of<ApiService>(context, listen: false);
+                if (member['mapping_id'] != null) {
+                  await apiService.updateTrainerMemberMappingStatus(
+                      member['mapping_id'], 'accepted');
+                  Navigator.of(dialogContext).pop();
+                  _fetchMembers();
+                  _showSuccessDialog(context, 'New member added successfully!');
+                } else {
+                  _showErrorDialog(context, 'An error occurred. Please try again.');
+                }
+              },
+              isDefaultAction: true,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   final List<CustomBottomNavItem> _navItems = [
     CustomBottomNavItem(
       icon: Icons.menu,
@@ -919,5 +967,4 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
       targetScreen: const MemberProfileScreen(),
     ),
   ];
-
 }

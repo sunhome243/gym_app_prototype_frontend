@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "121401963302",
+    "firebase_url": "https://fitsync-app-c93ad-default-rtdb.firebaseio.com",
     "project_id": "fitsync-app-c93ad",
     "storage_bucket": "fitsync-app-c93ad.appspot.com"
   },
@@ -12,7 +13,12 @@
           "package_name": "com.fitsync.a"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "121401963302-4cv171td6aep40ouu7po340g0l63roe8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBvUy-z2LB5D-eIgtY5Op85tvJ6AejKg0M"
@@ -20,7 +26,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "121401963302-4cv171td6aep40ouu7po340g0l63roe8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "121401963302-bsbse5um4dfjfgqfi2r4s4kaj097ejt8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +49,12 @@
           "package_name": "com.fitsync.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "121401963302-4cv171td6aep40ouu7po340g0l63roe8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBvUy-z2LB5D-eIgtY5Op85tvJ6AejKg0M"
@@ -39,7 +62,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "121401963302-4cv171td6aep40ouu7po340g0l63roe8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "121401963302-bsbse5um4dfjfgqfi2r4s4kaj097ejt8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
+            }
+          ]
         }
       }
     }

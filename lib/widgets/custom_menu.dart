@@ -19,8 +19,14 @@ class CustomMenuItem {
 class CustomMenu extends StatelessWidget {
   final List<CustomMenuItem> items;
   final Offset tapPosition;
+  final VoidCallback onDismiss;
 
-  const CustomMenu({super.key, required this.items, required this.tapPosition});
+  const CustomMenu({
+    super.key,
+    required this.items,
+    required this.tapPosition,
+    required this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,36 +60,30 @@ class CustomMenu extends StatelessWidget {
   double _calculateMenuLeftPosition(BuildContext context) {
     final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final Size overlaySize = overlay.size;
-    const double menuWidth = 200; 
-
+    const double menuWidth = 200;
     double left = tapPosition.dx;
-
     if (left + menuWidth > overlaySize.width) {
       left = overlaySize.width - menuWidth;
     }
-
     return left;
   }
 
   double _calculateMenuTopPosition(BuildContext context) {
     final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final Size overlaySize = overlay.size;
-    final double menuHeight = (items.length * 48).toDouble(); // Adjust 48 if item height changes
-
-    double top = tapPosition.dy - menuHeight; 
-
+    final double menuHeight = (items.length * 48).toDouble();
+    double top = tapPosition.dy - menuHeight;
     if (top < 0) {
-      top = tapPosition.dy + 20; 
+      top = tapPosition.dy + 20;
     }
-
     return top;
   }
 
   Widget _buildMenuItem(CustomMenuItem item, BuildContext context) {
-    return AnimatedInkWell( // Make sure AnimatedInkWell is correctly imported
+    return AnimatedInkWell(
       onTap: () {
-        Navigator.of(context).pop(); 
-        item.onTap();
+        onDismiss(); // Dismiss the menu first
+        item.onTap(); // Then execute the item's action
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -114,24 +114,40 @@ class CustomMenu extends StatelessWidget {
   }
 }
 
-void showCustomMenu(BuildContext context, Offset tapPosition, List<CustomMenuItem> items) {
-  OverlayEntry? menuOverlay;
+OverlayEntry? _currentMenu;
 
-  menuOverlay = OverlayEntry(
-    builder: (context) => Stack( // <-- Use a Stack here
+void showCustomMenu(BuildContext context, Offset tapPosition, List<CustomMenuItem> items) {
+  // Dismiss any existing menu
+  _currentMenu?.remove();
+
+  void dismissMenu() {
+    _currentMenu?.remove();
+    _currentMenu = null;
+  }
+
+  _currentMenu = OverlayEntry(
+    builder: (context) => Stack(
       children: [
         GestureDetector(
-          onTap: () {
-            menuOverlay?.remove();
-          },
+          onTap: dismissMenu,
           child: Container(
             color: Colors.transparent,
           ),
         ),
-        CustomMenu(items: items, tapPosition: tapPosition),
+        CustomMenu(
+          items: items,
+          tapPosition: tapPosition,
+          onDismiss: dismissMenu,
+        ),
       ],
     ),
   );
 
-  Overlay.of(context).insert(menuOverlay);
+  Overlay.of(context).insert(_currentMenu!);
+}
+
+// Function to dismiss the menu from outside
+void dismissCustomMenu() {
+  _currentMenu?.remove();
+  _currentMenu = null;
 }

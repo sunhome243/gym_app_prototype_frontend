@@ -7,6 +7,7 @@ import 'all_sessions_screen.dart';
 import 'member_profile_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/background.dart';
+import '../widgets/skeleton_ui_widgets.dart';
 
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
@@ -54,45 +55,95 @@ class _HomeScreenState extends State<MemberHomeScreen> {
     final gradientHeight = screenHeight / 3;
 
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : Background(
-                  height: gradientHeight,
-                  colors: const [Color(0xFF4CD964), Colors.white],
-                  child: _buildContent(),
+      body: Background(
+        height: gradientHeight,
+        colors: const [Color(0xFF4CD964), Colors.white],
+        child: _buildContent(),
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _buildStartSessionButton(),
+          ),
+          CustomBottomNavBar(
+            items: _navItems,
+            currentIndex: _selectedIndex,
+            onIndexChanged: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildSkeletonUI() {
+    return ShimmerLoading(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSkeletonHeader(),
+          const Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SkeletonCard(),
+                    SizedBox(height: 20),
+                    SkeletonCard(),
+                  ],
                 ),
-      bottomNavigationBar: CustomBottomNavBar(
-        items: _navItems,
-        currentIndex: _selectedIndex,
-        onIndexChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildSkeletonHeader() {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonText(width: 200, height: 24),
+                SizedBox(height: 8),
+                SkeletonText(width: 150, height: 16),
+              ],
+            ),
+          ),
+          SkeletonAvatar(),
+        ],
+      ),
+    );
+  }
   Widget _buildContent() {
-    final firstName = _userInfo?['first_name'] ?? 'User';
-
     return Column(
       children: [
-        _buildHeader(firstName),
+        _buildHeader(),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildRecordsCard(),
-                const SizedBox(height: 20),
-                _buildRecentSessionsCard(),
-                const SizedBox(height: 20),
-                _buildStartSessionButton(),
-              ],
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildRecordsCard(),
+                  const SizedBox(height: 20),
+                  _buildRecentSessionsCard(),
+                  const SizedBox(height: 100), // Space for the fixed button
+                ],
+              ),
             ),
           ),
         ),
@@ -100,26 +151,79 @@ class _HomeScreenState extends State<MemberHomeScreen> {
     );
   }
 
-  Widget _buildHeader(String firstName) {
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  }
+
+  String _getMotivationalPhrase() {
+    final phrases = [
+      "Let's crush your goals!",
+      "Time to level up!",
+      "Your strength awaits!",
+      "Progress starts now!",
+      "Embrace the challenge!",
+    ];
+    return phrases[DateTime.now().microsecond % phrases.length];
+  }
+
+  Widget _buildHeader() {
+    final firstName = _userInfo?['first_name'] ?? 'Member';
+    final greeting = _getGreeting();
+    final motivationalPhrase = _getMotivationalPhrase();
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Welcome,',
-            style: GoogleFonts.lato(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, $firstName!',
+                  style: GoogleFonts.lato(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  motivationalPhrase,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            firstName,
-            style: GoogleFonts.lato(
-              fontSize: 32,
-              fontWeight: FontWeight.normal,
-              color: Colors.black,
+          AnimatedInkWell(
+            onTap: () {
+              // TODO: Implement notification functionality
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.black,
+                size: 28,
+              ),
             ),
           ),
         ],

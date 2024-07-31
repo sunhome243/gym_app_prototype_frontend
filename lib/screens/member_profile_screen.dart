@@ -336,100 +336,99 @@ class _MemberProfileScreenState extends State<MemberProfileScreen>
     }
   }
 
-  void _showAddTrainerDialog() {
-    final formKey = GlobalKey<FormState>();
-    String trainerEmail = '';
-    String initialSessions = '';
+void _showAddTrainerDialog() {
+  final formKey = GlobalKey<FormState>();
+  String trainerEmail = '';
+  String initialSessions = '';
 
-    showCustomModal(
-      context: context,
-      title: 'Add Your Trainer',
-      theme: CustomModalTheme.blue,
-      icon: Icons.person_add,
-      content: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'Trainer Email',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                prefixIcon: const Icon(Icons.email, color: Colors.blue),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter trainer\'s email';
-                }
-                if (!value.contains('@')) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-              onSaved: (value) => trainerEmail = value!,
+  showCustomModal(
+    context: context,
+    title: 'Add Your Trainer',
+    theme: CustomModalTheme.blue,
+    icon: Icons.person_add,
+    content: Form(
+      key: formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [ // crossAxisAlignment.start 제거
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Trainer Email',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              prefixIcon: const Icon(Icons.email, color: Colors.blue),
             ),
-            const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Initial Sessions',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    prefixIcon: const Icon(Icons.fitness_center, color: Colors.blue),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter initial sessions';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) => initialSessions = value!,
-                ),
-                const SizedBox(height: 4),
-                Padding( // 설명 텍스트에만 왼쪽 패딩 적용
-                  padding: const EdgeInsets.only(left: 48), 
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      "Enter the number of sessions you've contracted with your trainer.",
-                      style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        CustomModalAction(
-          text: 'Cancel',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        CustomModalAction(
-          text: 'Add Trainer',
-          isDefaultAction: true,
-          onPressed: () async {
-            if (formKey.currentState!.validate()) {
-              formKey.currentState!.save();
-              try {
-                await _addTrainer(trainerEmail, int.parse(initialSessions));
-                Navigator.of(context).pop();
-              } catch (e) {
-                _showErrorDialog(e.toString());
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter trainer\'s email';
               }
+              if (!value.contains('@')) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
+            onSaved: (value) => trainerEmail = value!,
+          ),
+          const SizedBox(height: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Initial Sessions',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                  prefixIcon: const Icon(Icons.fitness_center, color: Colors.blue),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter initial sessions';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
+                },
+                onSaved: (value) => initialSessions = value!,
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: IntrinsicWidth(
+                  child: Text(
+                    "Enter the number of sessions you've contracted with your trainer.",
+                    style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600]),
+                    textAlign: TextAlign.left, // 텍스트는 왼쪽 정렬 유지
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+    actions: [
+      CustomModalAction(
+        text: 'Cancel',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      CustomModalAction(
+        text: 'Add Trainer',
+        isDefaultAction: true,
+        onPressed: () async {
+          if (formKey.currentState!.validate()) {
+            formKey.currentState!.save();
+            try {
+              await _addTrainer(trainerEmail, int.parse(initialSessions));
+              Navigator.of(context).pop();
+            } catch (e) {
+              _showErrorDialog(e.toString());
             }
-          },
-        ),
-      ],
-    );
-  }
+          }
+        },
+      ),
+    ],
+  );
+}
+
 
   void _showSuccessDialog() {
     showCustomModal(
