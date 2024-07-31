@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-enum CustomModalTheme { blue, red }
+enum CustomModalTheme { blue, green, red }
 
 class CustomModal extends StatelessWidget {
   final String title;
@@ -9,6 +9,7 @@ class CustomModal extends StatelessWidget {
   final List<CustomModalAction> actions;
   final CustomModalTheme theme;
   final IconData? icon;
+  final Widget? submitForm;
 
   const CustomModal({
     Key? key,
@@ -17,6 +18,7 @@ class CustomModal extends StatelessWidget {
     required this.actions,
     this.theme = CustomModalTheme.blue,
     this.icon,
+    this.submitForm,
   }) : super(key: key);
 
   @override
@@ -51,6 +53,10 @@ class CustomModal extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             content,
+            if (submitForm != null) ...[
+              const SizedBox(height: 24),
+              submitForm!,
+            ],
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -97,6 +103,11 @@ class CustomModal extends StatelessWidget {
           primary: Colors.blue,
           secondary: Colors.blue.shade100,
         );
+      case CustomModalTheme.green:
+        return _ThemeColors(
+          primary: Colors.green,
+          secondary: Colors.green.shade100,
+        );
       case CustomModalTheme.red:
         return _ThemeColors(
           primary: Colors.red,
@@ -127,4 +138,29 @@ class CustomModalAction {
     this.backgroundColor,
     this.textColor,
   });
+}
+
+// Utility function to show CustomModal
+void showCustomModal({
+  required BuildContext context,
+  required String title,
+  required Widget content,
+  required List<CustomModalAction> actions,
+  CustomModalTheme theme = CustomModalTheme.blue,
+  IconData? icon,
+  Widget? submitForm,
+}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomModal(
+        title: title,
+        content: content,
+        actions: actions,
+        theme: theme,
+        icon: icon,
+        submitForm: submitForm,
+      );
+    },
+  );
 }

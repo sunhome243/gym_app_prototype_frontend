@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const LoginScreen(),
           '/select_user_type': (context) => const SelectUserTypeScreen(),
-          '/home': (context) => const HomeScreen(),
+          '/home': (context) => const MemberHomeScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/sign_up') {

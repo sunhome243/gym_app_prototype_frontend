@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (userRole == 'trainer') {
           homeScreen = const TrainerHomeScreen();
         } else if (userRole == 'member') {
-          homeScreen = const HomeScreen();
+          homeScreen = const MemberHomeScreen();
         } else {
           throw Exception('Invalid user role');
         }

@@ -8,6 +8,7 @@ import 'member_profile_screen.dart'; // Assuming this import is correct
 import 'package:shimmer/shimmer.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/custom_menu.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
   const TrainerHomeScreen({super.key});
@@ -101,9 +102,34 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _getSelectedScreen(),
+        child: Stack(
+          children: [
+            _getSelectedScreen(),
+            if (_isExpanded)
+              Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_up,
+                        color: Colors.blue, size: 30),
+                    onPressed: _toggleExpand,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
-      bottomNavigationBar: _buildCustomBottomNavigationBar(),
+      bottomNavigationBar: CustomBottomNavBar(
+        items: _navItems,
+        currentIndex: _selectedIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
     );
   }
 
@@ -114,20 +140,20 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
       case 1:
         return _buildContent();
       case 2:
-        return const ProfileScreen();
+        return const MemberProfileScreen();
       default:
         return _buildContent();
     }
   }
 
-   Widget _buildMyMembersCard() {
+  Widget _buildMyMembersCard() {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        height: _isExpanded ? 480 : 220, // Adjust these values as needed
+        height: _isExpanded ? 480 : 220,
         child: Stack(
           children: [
             Column(
@@ -146,7 +172,8 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.arrow_forward, color: Colors.blue),
+                        icon: const Icon(Icons.keyboard_arrow_right,
+                            color: Colors.blue),
                         onPressed: () {
                           // TODO: Navigate to trainer_manage_members screen
                           print('Navigate to trainer_manage_members screen');
@@ -157,7 +184,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    physics: _isExpanded ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     child: Column(
                       children: [
                         _isLoading ? _buildSkeletonUI() : _buildMembersGrid(),
@@ -182,12 +209,23 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
               left: 0,
               right: 0,
               child: Center(
-                child: IconButton(
-                  icon: Icon(
-                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: Colors.blue,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    return ScaleTransition(scale: animation, child: child);
+                  },
+                  child: IconButton(
+                    key: ValueKey<bool>(_isExpanded),
+                    icon: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: Colors.blue,
+                      size: 30,
+                    ),
+                    onPressed: _toggleExpand,
                   ),
-                  onPressed: _toggleExpand,
                 ),
               ),
             ),
@@ -196,7 +234,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
       ),
     );
   }
-
 
   Widget _buildExpandedMembersList() {
     return GridView.builder(
@@ -321,13 +358,15 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
   Widget _buildAddMemberButton() {
     return AnimatedInkWell(
       onTap: _showAddMemberModal,
-      borderRadius: BorderRadius.circular(10),
+      // Remove the onLongPress property
+      borderRadius: BorderRadius.circular(30),
+      enableTapFeedback: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            height: 60,
             width: 60,
+            height: 60,
             decoration: const BoxDecoration(
               color: Colors.blue,
               shape: BoxShape.circle,
@@ -340,11 +379,11 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Add',
             style: GoogleFonts.lato(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -395,8 +434,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
           print('Navigating to profile page');
         }
       },
-      onLongPress: (Offset position) => _showDeleteMenu(member, position),
+      onLongPress: (Offset tapPosition) {
+        _showDeleteMenu(member, tapPosition);
+      },
       splashColor: Colors.blue.withOpacity(0.3),
+      borderRadius: BorderRadius.circular(30),
+      enableTapFeedback: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -478,7 +521,10 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
         CustomMenuItem(
           icon: Icons.delete_outline,
           text: 'Remove',
-          onTap: () => _showDeleteConfirmationModal(member),
+          onTap: () {
+            _showDeleteConfirmationModal(member);
+            setState(() {});
+          },
           color: Colors.red,
         ),
       ],
@@ -488,60 +534,38 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
   Widget _buildContent() {
     final firstName = _trainerInfo?['first_name'] ?? 'User';
 
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          physics: _isExpanded ? const NeverScrollableScrollPhysics() : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                color: const Color(0xFF4CD964),
-                child: Text(
-                  'Welcome,\n$firstName',
-                  style: GoogleFonts.lato(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            color: const Color(0xFF4CD964),
+            child: Text(
+              'Welcome,\n$firstName',
+              style: GoogleFonts.lato(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildMyMembersCard(),
-                    const SizedBox(height: 20),
-                    AnimatedOpacity(
-                      opacity: _isExpanded ? 0.3 : 1.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: IgnorePointer(
-                        ignoring: _isExpanded,
-                        child: Column(
-                          children: [
-                            _buildMembersProgressCard(),
-                            const SizedBox(height: 20),
-                            _buildStartSessionButton(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (_isExpanded)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _toggleExpand,
-              child: Container(color: Colors.transparent),
             ),
           ),
-      ],
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildMyMembersCard(),
+                const SizedBox(height: 20),
+                _buildMembersProgressCard(),
+                const SizedBox(height: 20),
+                _buildStartSessionButton(),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -881,64 +905,19 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     );
   }
 
-  Widget _buildCustomBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, -1),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.menu, 0),
-            _buildNavItem(Icons.home, 1, onTap: _fetchMembers),
-            _buildNavItem(Icons.person, 2),
-          ],
-        ),
-      ),
-    );
-  }
+  final List<CustomBottomNavItem> _navItems = [
+    CustomBottomNavItem(
+      icon: Icons.menu,
+      targetScreen: const Center(child: Text('Menu Screen')),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.home,
+      targetScreen: const TrainerHomeScreen(),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.person,
+      targetScreen: const MemberProfileScreen(),
+    ),
+  ];
 
-  Widget _buildNavItem(IconData icon, int index, {VoidCallback? onTap}) {
-    final isSelected = _selectedIndex == index;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedIndex = index);
-        if (onTap != null) {
-          onTap();
-        }
-        if (index == 1) {
-          // 홈 버튼일 경우
-          _fetchMembers();
-        }
-      },
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 1.0, end: isSelected ? 1.2 : 0.8),
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        builder: (context, value, child) {
-          return Transform.scale(
-            scale: value,
-            child: child,
-          );
-        },
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.blue : Colors.grey,
-          size: 28,
-        ),
-      ),
-    );
-  }
 }

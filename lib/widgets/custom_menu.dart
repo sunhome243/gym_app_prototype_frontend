@@ -18,49 +18,93 @@ class CustomMenuItem {
 
 class CustomMenu extends StatelessWidget {
   final List<CustomMenuItem> items;
+  final Offset tapPosition;
 
-  const CustomMenu({Key? key, required this.items}) : super(key: key);
+  const CustomMenu({super.key, required this.items, required this.tapPosition});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return Positioned(
+      left: _calculateMenuLeftPosition(context),
+      top: _calculateMenuTopPosition(context),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              spreadRadius: 2,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: items.map((item) => _buildMenuItem(item, context)).toList(),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: items.map((item) => _buildMenuItem(item, context)).toList(),
+        ),
       ),
     );
   }
 
+  double _calculateMenuLeftPosition(BuildContext context) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final Size overlaySize = overlay.size;
+    const double menuWidth = 200; 
+
+    double left = tapPosition.dx;
+
+    if (left + menuWidth > overlaySize.width) {
+      left = overlaySize.width - menuWidth;
+    }
+
+    return left;
+  }
+
+  double _calculateMenuTopPosition(BuildContext context) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final Size overlaySize = overlay.size;
+    final double menuHeight = (items.length * 48).toDouble(); // Adjust 48 if item height changes
+
+    double top = tapPosition.dy - menuHeight; 
+
+    if (top < 0) {
+      top = tapPosition.dy + 20; 
+    }
+
+    return top;
+  }
+
   Widget _buildMenuItem(CustomMenuItem item, BuildContext context) {
-    return AnimatedInkWell(
+    return AnimatedInkWell( // Make sure AnimatedInkWell is correctly imported
       onTap: () {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); 
         item.onTap();
       },
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(item.icon, color: item.color ?? Theme.of(context).primaryColor),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: (item.color ?? Colors.blue).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(item.icon, color: item.color ?? Colors.blue, size: 18),
+            ),
             const SizedBox(width: 12),
             Text(
               item.text,
               style: GoogleFonts.lato(
-                color: item.color ?? Theme.of(context).primaryColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
               ),
             ),
           ],
@@ -70,23 +114,24 @@ class CustomMenu extends StatelessWidget {
   }
 }
 
-void showCustomMenu(BuildContext context, Offset position, List<CustomMenuItem> items) {
-  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-  final RelativeRect positionRect = RelativeRect.fromRect(
-    Rect.fromPoints(position, position),
-    Offset.zero & overlay.size,
+void showCustomMenu(BuildContext context, Offset tapPosition, List<CustomMenuItem> items) {
+  OverlayEntry? menuOverlay;
+
+  menuOverlay = OverlayEntry(
+    builder: (context) => Stack( // <-- Use a Stack here
+      children: [
+        GestureDetector(
+          onTap: () {
+            menuOverlay?.remove();
+          },
+          child: Container(
+            color: Colors.transparent,
+          ),
+        ),
+        CustomMenu(items: items, tapPosition: tapPosition),
+      ],
+    ),
   );
 
-  showMenu(
-    context: context,
-    position: positionRect,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    elevation: 4,
-    items: [
-      PopupMenuItem(
-        padding: EdgeInsets.zero,
-        child: CustomMenu(items: items),
-      ),
-    ],
-  );
+  Overlay.of(context).insert(menuOverlay);
 }

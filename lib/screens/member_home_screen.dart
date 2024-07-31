@@ -5,15 +5,18 @@ import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
 import 'all_sessions_screen.dart';
 import 'member_profile_screen.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
+import '../widgets/background.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class MemberHomeScreen extends StatefulWidget {
+  const MemberHomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<MemberHomeScreen> {
+  int _selectedIndex = 1;
   Map<String, dynamic>? _userInfo;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -47,13 +50,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final gradientHeight = screenHeight / 3;
+
     return Scaffold(
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage.isNotEmpty
-                ? Center(child: Text(_errorMessage))
-                : _buildContent(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+              ? Center(child: Text(_errorMessage))
+              : Background(
+                  height: gradientHeight,
+                  colors: const [Color(0xFF4CD964), Colors.white],
+                  child: _buildContent(),
+                ),
+      bottomNavigationBar: CustomBottomNavBar(
+        items: _navItems,
+        currentIndex: _selectedIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }
@@ -61,27 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildContent() {
     final firstName = _userInfo?['first_name'] ?? 'User';
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AnimatedInkWell(
-            onTap: () => _showUserInfoDialog(context),
-            splashColor: Colors.white.withOpacity(0.3),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              color: const Color(0xFF4CD964),
-              child: Text(
-                'Welcome,\n$firstName',
-                style: GoogleFonts.lato(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Padding(
+    return Column(
+      children: [
+        _buildHeader(firstName),
+        Expanded(
+          child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -94,144 +95,127 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(String firstName) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Welcome,',
+            style: GoogleFonts.lato(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            firstName,
+            style: GoogleFonts.lato(
+              fontSize: 32,
+              fontWeight: FontWeight.normal,
+              color: Colors.black,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  void _showUserInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('User Information'),
-          content: Text('UID: ${_userInfo!['uid'] ?? 'Unknown'}\n'
-              'Email: ${_userInfo!['email'] ?? 'Unknown'}\n'
-              'Role: ${_userInfo!['role'] ?? 'Unknown'}'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+  Widget _buildRecordsCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My Records',
+              style: GoogleFonts.lato(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            TextButton(
-              child: const Text('Refresh'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _fetchUserInfo();
-              },
+            Text(
+              'Weekly Workout Progress',
+              style: GoogleFonts.lato(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  'Graph will be implemented here',
+                  style: GoogleFonts.lato(color: Colors.grey[600]),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  // TODO: Implement view all functionality
+                },
+                child: const Text('View All'),
+              ),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  Widget _buildRecordsCard() {
-    return AnimatedInkWell(
-      onTap: () {
-        // TODO: Implement view all functionality
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'My Records',
-                style: GoogleFonts.lato(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Weekly Workout Progress',
-                style: GoogleFonts.lato(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    'Graph will be implemented here',
-                    style: GoogleFonts.lato(color: Colors.grey[600]),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: Implement view all functionality
-                  },
-                  child: const Text('View All'),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 
   Widget _buildRecentSessionsCard() {
-    return AnimatedInkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Most Recent Sessions',
-                style: GoogleFonts.lato(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Most Recent Sessions',
+              style: GoogleFonts.lato(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 10),
-              _buildSessionItem(
-                  '1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
-              _buildSessionItem(
-                  '2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
-              _buildSessionItem(
-                  '3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AllSessionsScreen()),
-                    );
-                  },
-                  child: const Text('View All'),
-                ),
+            ),
+            const SizedBox(height: 10),
+            _buildSessionItem(
+                '1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
+            _buildSessionItem(
+                '2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
+            _buildSessionItem(
+                '3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AllSessionsScreen()),
+                  );
+                },
+                child: const Text('View All'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -305,21 +289,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleNavigation(int index) {
-    switch (index) {
-      case 0:
-        // Navigate to menu screen
-        // TODO: Implement menu screen navigation
-        break;
-      case 1:
-        // Stay on home screen
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
-        break;
-    }
-  }
+  final List<CustomBottomNavItem> _navItems = [
+    CustomBottomNavItem(
+      icon: Icons.menu,
+      targetScreen: const Center(child: Text('Menu Screen')),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.home,
+      targetScreen: const MemberHomeScreen(),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.person,
+      targetScreen: const MemberProfileScreen(),
+    ),
+  ];
 }

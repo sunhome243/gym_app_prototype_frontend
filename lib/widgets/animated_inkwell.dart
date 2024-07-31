@@ -9,17 +9,19 @@ class AnimatedInkWell extends StatefulWidget {
   final Color? highlightColor;
   final BorderRadius? borderRadius;
   final Duration animationDuration;
+  final bool enableTapFeedback;
 
   const AnimatedInkWell({
-    Key? key,
+    super.key,
     required this.child,
     this.onTap,
     this.onLongPress,
     this.splashColor,
     this.highlightColor,
     this.borderRadius,
-    this.animationDuration = const Duration(milliseconds: 200),
-  }) : super(key: key);
+    this.animationDuration = const Duration(milliseconds: 150),
+    this.enableTapFeedback = false,
+  });
 
   @override
   _AnimatedInkWellState createState() => _AnimatedInkWellState();
@@ -28,6 +30,9 @@ class AnimatedInkWell extends StatefulWidget {
 class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  bool _isPressed = false;
+  bool _isLongPressed = false;
 
   @override
   void initState() {
@@ -39,6 +44,9 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.7).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -48,54 +56,88 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
   }
 
   void _handleTapDown(TapDownDetails details) {
+    _isPressed = true;
     _controller.forward();
+    if (widget.enableTapFeedback) {
+      HapticFeedback.lightImpact();
+    }
   }
 
   void _handleTapUp(TapUpDetails details) {
+    _isPressed = false;
     _controller.reverse();
+    if (!_isLongPressed && widget.onTap != null) {
+      widget.onTap!();
+    }
+    _isLongPressed = false;
   }
 
   void _handleTapCancel() {
+    _isPressed = false;
     _controller.reverse();
+    _isLongPressed = false;
   }
 
   void _handleLongPressStart(LongPressStartDetails details) {
+    _isLongPressed = true;
+    _isPressed = true;
     _controller.forward();
-    HapticFeedback.mediumImpact();
+    if (widget.enableTapFeedback) {
+      HapticFeedback.mediumImpact();
+    }
     if (widget.onLongPress != null) {
       widget.onLongPress!(details.globalPosition);
     }
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
-    _controller.reverse();
+    _isPressed = false;
+    if (widget.onLongPress == null && widget.onTap != null) {
+      widget.onTap!();
+    }
+    // Don't reset _isLongPressed here
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      onLongPressStart: _handleLongPressStart,
-      onLongPressEnd: _handleLongPressEnd,
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                splashColor: widget.splashColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
-                highlightColor: widget.highlightColor ?? Theme.of(context).primaryColor.withOpacity(0.05),
-                borderRadius: widget.borderRadius,
-                child: widget.child,
+    return Listener(
+      onPointerUp: (_) {
+        if (_isPressed) {
+          _isPressed = false;
+          _controller.reverse();
+        }
+      },
+      child: GestureDetector(
+        onTapDown: _handleTapDown,
+        onTapUp: _handleTapUp,
+        onTapCancel: _handleTapCancel,
+        onLongPressStart: _handleLongPressStart,
+        onLongPressEnd: _handleLongPressEnd,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Opacity(
+                opacity: _opacityAnimation.value,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: widget.borderRadius,
+                    ),
+                    child: InkWell(
+                      splashColor: widget.splashColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
+                      highlightColor: widget.highlightColor ?? Theme.of(context).primaryColor.withOpacity(0.05),
+                      borderRadius: widget.borderRadius,
+                      child: widget.child,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

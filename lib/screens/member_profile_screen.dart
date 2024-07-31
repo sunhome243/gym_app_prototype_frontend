@@ -1,27 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../services/api_services.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import '../widgets/info_tooltip.dart';
+
+import '../services/api_services.dart';
+import '../services/auth_service.dart';
 import '../widgets/animated_inkwell.dart';
 import 'member_home_screen.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
+import 'login_screen.dart';
+import '../widgets/custom_modal.dart';
 
-
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class MemberProfileScreen extends StatefulWidget {
+  const MemberProfileScreen({super.key});
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  _MemberProfileScreenState createState() => _MemberProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+class _MemberProfileScreenState extends State<MemberProfileScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isExpanded = false;
   Map<String, dynamic> _userInfo = {};
   List<dynamic> _trainerMappings = [];
   bool _isLoading = true;
+
+  int _selectedIndex = 2;
+
+  final List<CustomBottomNavItem> _navItems = [
+    CustomBottomNavItem(
+      icon: Icons.menu,
+      targetScreen: const Center(child: Text('Menu Screen')),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.home,
+      targetScreen: const MemberHomeScreen(),
+    ),
+    CustomBottomNavItem(
+      icon: Icons.person,
+      targetScreen: const MemberProfileScreen(),
+    ),
+  ];
 
   @override
   void initState() {
@@ -50,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final idToken = await apiService.getIdToken();
       final decodedToken = JwtDecoder.decode(idToken);
       final mappings = await apiService.getMyMappings();
-      
+
       setState(() {
         _userInfo = {
           'fullName': decodedToken['name'] ?? 'Unknown',
@@ -77,89 +98,122 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     });
   }
 
- @override
+  void _showLogoutConfirmationDialog() {
+    showCustomModal(
+      context: context,
+      title: 'Log Out?',
+      theme: CustomModalTheme.red,
+      icon: Icons.exit_to_app,
+      content: Text(
+        'Are you sure you want to log out?',
+        style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+      ),
+      actions: [
+        CustomModalAction(
+          text: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        CustomModalAction(
+          text: 'Log Out',
+          isDefaultAction: true,
+          onPressed: () async {
+            await Provider.of<AuthService>(context, listen: false).signOut();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildProfileCard(),
-                  _buildManageTrainerCard(),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Notifications coming soon!',
-                    style: GoogleFonts.lato(
-                      fontSize: 18,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey[600],
-                    ),
+          : CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(_userInfo['fullName'] ?? 'Profile',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.blue[400]!, Colors.blue[800]!],
                   ),
-                ],
+                ),
               ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _showLogoutConfirmationDialog,
+              ),
+            ],
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              _buildProfileInfo(),
+              _buildManageTrainerCard(),
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  'Notifications coming soon!',
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 100),
+            ]),
+          ),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        items: _navItems,
+        currentIndex: _selectedIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileInfo() {
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Hero(
-                  tag: 'profile-avatar',
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue[100],
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.blue[800],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _userInfo['fullName'] ?? 'Loading...',
-                        style: GoogleFonts.lato(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _userInfo['email'] ?? 'Loading...',
-                        style: GoogleFonts.lato(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            ListTile(
+              leading: const Icon(Icons.email, color: Colors.blue),
+              title: Text('Email',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+              subtitle: Text(_userInfo['email'] ?? 'Unknown',
+                  style: GoogleFonts.lato()),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'UID: ${_userInfo['uid'] ?? 'Loading...'}',
-              style: GoogleFonts.lato(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+            ListTile(
+              leading: const Icon(Icons.fingerprint, color: Colors.blue),
+              title: Text('UID',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+              subtitle: Text(_userInfo['uid'] ?? 'Unknown',
+                  style: GoogleFonts.lato()),
             ),
           ],
         ),
@@ -168,439 +222,264 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildManageTrainerCard() {
-    return Stack(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.only(top: 30),
-          child: Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  child: SizedBox(
-                    height: _isExpanded ? null : 0,
-                    child: _buildTrainerInfo(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: 0,
-          left: 32,
-          right: 32,
-          child: Hero(
-            tag: 'manage-trainer-header',
-            child: AnimatedInkWell(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Column(
+          children: [
+            AnimatedInkWell(
               onTap: _toggleExpand,
-              borderRadius: BorderRadius.circular(30),
-              splashColor: Colors.white.withOpacity(0.3),
-              highlightColor: Colors.white.withOpacity(0.1),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Manage Trainer',
+                      style: GoogleFonts.lato(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                    RotationTransition(
+                      turns: Tween(begin: 0.0, end: 0.5).animate(_animation),
+                      child: const Icon(Icons.expand_more,
+                          color: Colors.blue, size: 28),
                     ),
                   ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Manage Trainer',
-                        style: GoogleFonts.lato(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      RotationTransition(
-                        turns: Tween(begin: 0.0, end: 0.5).animate(_animation),
-                        child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 28),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
-          ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              child:
+              _isExpanded ? _buildTrainerInfo() : const SizedBox.shrink(),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildTrainerInfo() {
     if (_trainerMappings.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Text(
               'You don\'t have any trainers yet.',
-              style: GoogleFonts.lato(fontSize: 18, color: Colors.grey[700]),
+              style: GoogleFonts.lato(fontSize: 16, color: Colors.grey[700]),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            AnimatedInkWell(
-              onTap: _showAddTrainerModal,
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  'Add Your Trainer!',
-                  style: GoogleFonts.lato(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _showAddTrainerDialog(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
+              child: Text('Add Your Trainer!', style: GoogleFonts.lato()),
             ),
           ],
         ),
       );
     } else {
       return Column(
-        children: _trainerMappings.map((mapping) => AnimatedInkWell(
-          onTap: () {
-            // Handle tap on trainer item
-          },
-          child: ListTile(
+        children: _trainerMappings.map((mapping) {
+          return ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.green[100],
-              child: Icon(Icons.fitness_center, color: Colors.green[800], size: 28),
+              child: Text(
+                '${mapping['trainer_first_name'][0]}${mapping['trainer_last_name'][0]}',
+                style: GoogleFonts.lato(
+                    fontWeight: FontWeight.bold, color: Colors.green[800]),
+              ),
             ),
             title: Text(
               '${mapping['trainer_first_name']} ${mapping['trainer_last_name']}',
-              style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.lato(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               mapping['status'],
               style: GoogleFonts.lato(
-                fontSize: 16,
-                color: mapping['status'] == 'accepted' ? Colors.green : Colors.orange,
+                color: mapping['status'] == 'accepted'
+                    ? Colors.green
+                    : Colors.orange,
                 fontWeight: FontWeight.w600,
               ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, color: Colors.blue),
-          ),
-        )).toList(),
+            onTap: () {
+              // Handle tap on trainer
+            },
+          );
+        }).toList(),
       );
     }
   }
 
-  void _showAddTrainerModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: AddTrainerModal(onTrainerAdded: _handleTrainerAdded),
-        );
-      },
-    );
-  }
-
-  void _handleTrainerAdded() {
-    _loadUserInfo();  // Refresh the trainer mappings
-  }
-}
-
-class AddTrainerModal extends StatefulWidget {
-  final Function onTrainerAdded;
-
-  const AddTrainerModal({super.key, required this.onTrainerAdded});
-
-  @override
-  _AddTrainerModalState createState() => _AddTrainerModalState();
-}
-
-class _AddTrainerModalState extends State<AddTrainerModal> {
-  final _formKey = GlobalKey<FormState>();
-  String _trainerEmail = '';
-  String _initialSessions = '';
-  bool _isLoading = false;
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Oops! ',
-                  style: GoogleFonts.lato(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: Colors.amber[700],
-                  ),
-                ),
-                const TextSpan(
-                  text: '🙈',
-                  style: TextStyle(fontSize: 24),
-                ),
-              ],
-            ),
-          ),
-          content: RichText(
-            text: TextSpan(
-              style: GoogleFonts.lato(fontSize: 18, color: Colors.black87, height: 1.5),
-              children: [
-                TextSpan(text: message.substring(0, message.lastIndexOf('.'))),
-                const TextSpan(text: ' '),
-                TextSpan(
-                  text: message.substring(message.lastIndexOf('.') + 1).trim(),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700]),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Got it!',
-                style: GoogleFonts.lato(
-                  color: Colors.blue[700],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      setState(() => _isLoading = true);
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      try {
-        print("Attempting to request trainer-member mapping...");
-        await apiService.requestTrainerMemberMapping(_trainerEmail, int.parse(_initialSessions));
-        print("Trainer-member mapping request successful");
-        Navigator.of(context).pop();
-        widget.onTrainerAdded();
-        _showSuccessDialog();
-      } catch (e) {
-        print("Error occurred: $e");
-        String errorMessage;
-        if (e.toString().contains('not found')) {
-          errorMessage = 'We couldn\'t find a trainer with that email. Double-check the address and try again!';
-        } else if (e.toString().contains('Mapping already exists and is accepted')) {
-          errorMessage = 'Great news! You\'re already connected with this trainer. No need to reconnect. You\'re all set to crush those goals!';
-        } else if (e.toString().contains('Mapping already exists and is pending')) {
-          errorMessage = 'You\'ve already sent a request to this trainer. They\'re probably just warming up before accepting. Hang tight!';
-        } else {
-          errorMessage = 'Whoa, where are we? Can we try that again?';
-        }
-        _showErrorDialog(errorMessage);
-      } finally {
-        setState(() => _isLoading = false);
-      }
+  Future<void> _addTrainer(String email, int sessions) async {
+    final apiService = Provider.of<ApiService>(context, listen: false);
+    try {
+      await apiService.requestTrainerMemberMapping(email, sessions);
+      _showSuccessDialog();
+    } catch (e) {
+      _showErrorDialog(e.toString());
     }
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Icon(Icons.check_circle_outline, color: Colors.green[700], size: 30),
-              const SizedBox(width: 10),
-              Text('Success! 🎉', 
-                style: GoogleFonts.lato(
-                  fontWeight: FontWeight.bold,fontSize: 24,
-                  color: Colors.green[700],
-                )
-              ),
-            ],
-          ),
-          content: RichText(
-            text: TextSpan(
-              style: GoogleFonts.lato(fontSize: 16, color: Colors.black87, height: 1.5),
-              children: [
-                TextSpan(
-                  text: 'Connection request sent! 💪\n\n',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[700]),
-                ),
-                const TextSpan(text: 'What\'s next?\n'),
-                TextSpan(
-                  text: '• Now, sit tight and maybe do a few stretches. 🧘‍♂️ and wait for trainer acceptance\n\n',
-                  style: TextStyle(color: Colors.blue[700]),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Got it!',
-                style: GoogleFonts.lato(
-                  color: Colors.green[700],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  void _showAddTrainerDialog() {
+    final formKey = GlobalKey<FormState>();
+    String trainerEmail = '';
+    String initialSessions = '';
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
+    showCustomModal(
+      context: context,
+      title: 'Add Your Trainer',
+      theme: CustomModalTheme.blue,
+      icon: Icons.person_add,
+      content: Form(
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Add Your Trainer 🏋️‍♂️',
-              style: GoogleFonts.lato(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue[800]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
             TextFormField(
               decoration: InputDecoration(
                 labelText: 'Trainer Email',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                 prefixIcon: const Icon(Icons.email, color: Colors.blue),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Colors.blue, width: 2),
-                ),
               ),
-              style: GoogleFonts.lato(fontSize: 16),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter trainer\'s email';
                 }
+                if (!value.contains('@')) {
+                  return 'Please enter a valid email';
+                }
                 return null;
               },
-              onSaved: (value) => _trainerEmail = value!,
+              onSaved: (value) => trainerEmail = value!,
             ),
             const SizedBox(height: 16),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Initial Sessions',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                      prefixIcon: const Icon(Icons.fitness_center, color: Colors.blue),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(color: Colors.blue, width: 2),
-                      ),
-                    ),
-                    style: GoogleFonts.lato(fontSize: 16),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter initial sessions';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _initialSessions = value!,
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: 'Initial Sessions',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    prefixIcon: const Icon(Icons.fitness_center, color: Colors.blue),
                   ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter initial sessions';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => initialSessions = value!,
                 ),
-                const InfoTooltip(
-                  title: 'Session Guide 💡',
-                  content: 'Enter the **number of sessions** you\'ve agreed with your trainer.\n\nThis will be used to **track your progress** and **plan your fitness journey**. Let\'s get those gains! 💪',
+                const SizedBox(height: 4),
+                Padding( // 설명 텍스트에만 왼쪽 패딩 적용
+                  padding: const EdgeInsets.only(left: 48), 
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      "Enter the number of sessions you've contracted with your trainer.",
+                      style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.lato(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: _submitForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        ),
-                        child: Text(
-                          'Request 🚀',
-                          style: GoogleFonts.lato(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
           ],
         ),
       ),
+      actions: [
+        CustomModalAction(
+          text: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        CustomModalAction(
+          text: 'Add Trainer',
+          isDefaultAction: true,
+          onPressed: () async {
+            if (formKey.currentState!.validate()) {
+              formKey.currentState!.save();
+              try {
+                await _addTrainer(trainerEmail, int.parse(initialSessions));
+                Navigator.of(context).pop();
+              } catch (e) {
+                _showErrorDialog(e.toString());
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showSuccessDialog() {
+    showCustomModal(
+      context: context,
+      title: 'Success!',
+      theme: CustomModalTheme.green,
+      icon: Icons.check_circle_outline,
+      content: RichText(
+        text: TextSpan(
+          style: GoogleFonts.lato(fontSize: 16, color: Colors.black87, height: 1.5),
+          children: [
+            TextSpan(
+              text: 'Connection request sent! \n\n',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[700]),
+            ),
+            const TextSpan(text: 'What\'s next?\n'),
+            TextSpan(
+              text: 'Now, sit tight and maybe do a few stretches. Wait for trainer acceptance\n\n',
+              style: TextStyle(color: Colors.green[700]),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        CustomModalAction(
+          text: 'Got it!',
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showCustomModal(
+      context: context,
+      title: 'Oops!',
+      theme: CustomModalTheme.red,
+      icon: Icons.error_outline,
+      content: Text(
+        message,
+        style: GoogleFonts.lato(fontSize: 18, color: Colors.black87),
+      ),
+      actions: [
+        CustomModalAction(
+          text: 'Got it!',
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }
