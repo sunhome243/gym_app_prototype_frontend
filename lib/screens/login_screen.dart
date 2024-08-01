@@ -121,40 +121,49 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-              SafeArea(
-                child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: size.height),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 30),
-                      child: Column(
-                        children: [
-                          SizedBox(height: size.height * 0.12),
-                          _buildLogo(),
-                          SizedBox(height: size.height * 0.08),
-                          Hero(
-                            tag: 'contentBox',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Container(
-                                constraints: const BoxConstraints(maxWidth: 400),
-                                child: _buildLoginBox(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildSignUpButton(),
-                        ],
-                      ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                          height:
+                              size.height * 0.0625), // 1/4 of the upper quarter
+                      _buildLogo(),
+                      SizedBox(
+                          height:
+                              size.height * 0.1875), // 3/4 of the upper quarter
+                    ],
+                  ),
+                ),
+                Hero(
+                  tag: 'contentBox',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: _buildLoginBox(),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildSignUpButton(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        )
-      )
-    );
+        ],
+      ),
+    )));
   }
 
   Widget _buildLogo() {

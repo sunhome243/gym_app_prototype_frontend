@@ -60,28 +60,29 @@ class SelectUserTypeScreen extends StatelessWidget {
               ),
             ),
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: size.height),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      SizedBox(height: size.height * 0.12),
+                      SizedBox(height: size.height * 0.0625), // 1/4 of the upper quarter
                       _buildLogo(),
-                      SizedBox(height: size.height * 0.08),
-                      Hero(
-                        tag: 'contentBox',
-                        child: Material(
-                          color: Colors.transparent,
-                          child: _buildContent(context),
-                        ),
-                      ),
+                      SizedBox(height: size.height * 0.1875), // 3/4 of the upper quarter
                     ],
                   ),
                 ),
-              ),
+                Hero(
+                  tag: 'contentBox',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: _buildContent(context),
+                  ),
+                ),
+                const Expanded(child: SizedBox()), // To balance the layout
+              ],
             ),
           ),
           

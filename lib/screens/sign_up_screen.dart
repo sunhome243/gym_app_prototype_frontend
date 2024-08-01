@@ -70,10 +70,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-        body: SingleChildScrollView(
-            child: SizedBox(
-      height: size.height,
-      child: Stack(
+      body: Stack(
         children: [
           // Background gradient
           Positioned.fill(
@@ -84,8 +81,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 1.5,
+                    center: Alignment.center,
+                    radius: 1,
                     colors: [
                       widget.userType == 'Trainer'
                           ? const Color(0xFF6EB6FF)
@@ -98,31 +95,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: size.height),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      SizedBox(height: size.height * 0.12),
+                      SizedBox(height: size.height * 0.0625), // 1/4 of the upper quarter
                       _buildLogo(),
-                      SizedBox(height: size.height * 0.08),
-                      Hero(
-                        tag: 'contentBox',
-                        child: Material(
-                          color: Colors.transparent,
-                          child: _buildSignUpForm(),
-                        ),
-                      ),
+                      SizedBox(height: size.height * 0.1875), // 3/4 of the upper quarter
                     ],
                   ),
                 ),
-              ),
+                Hero(
+                  tag: 'contentBox',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: _buildSignUpForm(),
+                  ),
+                ),
+                const Expanded(child: SizedBox()), // To balance the layout
+              ],
             ),
           ),
-
+          
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -130,7 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ],
       ),
-    )));
+    );
   }
 
   Widget _buildLogo() {
@@ -311,8 +309,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             width: 2,
           ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       style: GoogleFonts.lato(),
       validator: (value) {
