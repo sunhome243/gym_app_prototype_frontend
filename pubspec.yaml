@@ -49,6 +49,7 @@ dependencies:
   jwt_decoder: ^2.0.1
   shimmer: ^3.0.0
   google_sign_in: ^6.2.1
+  flutter_svg: ^2.0.10+1
   
 
 dev_dependencies:

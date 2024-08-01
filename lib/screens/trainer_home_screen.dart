@@ -103,41 +103,49 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final gradientHeight = screenHeight / 3;
-
-    return Scaffold(
-      body: Background(
-        height: gradientHeight,
-        colors: const [Color(0xFF6EB6FF), Colors.white],
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage.isNotEmpty
-                ? Center(child: Text(_errorMessage))
-                : _buildContent(),
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: _buildStartSessionButton(),
-          ),
-          CustomBottomNavBar(
-            items: _navItems,
-            currentIndex: _selectedIndex,
-            onIndexChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
+@override
+Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
+  final gradientHeight = screenHeight / 3;
+  
+  return Scaffold(
+    body: Stack(
+      children: [
+        Background(
+          height: screenHeight,
+          colors: const [Color(0xFF6EB6FF), Colors.white],
+          stops: const [0.0, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          heroTag: 'top_blue_gradient',
+        ),
+        _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+            ? Center(child: Text(_errorMessage))
+            : _buildContent(),
+      ],
+    ),
+    bottomNavigationBar: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: _buildStartSessionButton(),
+        ),
+        CustomBottomNavBar(
+          items: _navItems,
+          currentIndex: _selectedIndex,
+          onIndexChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildContent() {
     return Column(

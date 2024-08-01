@@ -90,9 +90,6 @@ class AuthService {
     }
 
     String role = decodedToken['role'] as String? ?? 'unknown';
-    if (role == 'unknown' && kDebugMode) {
-      print('Warning: User role not found in token');
-    }
 
     return {
       'uid': user.uid,

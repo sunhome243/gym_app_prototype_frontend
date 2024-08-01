@@ -49,37 +49,46 @@ class _HomeScreenState extends State<MemberHomeScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final gradientHeight = screenHeight / 3;
+@override
+Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
+  final gradientHeight = screenHeight / 3;
+  
+  return Scaffold(
+    body: Stack(
+      children: [
+        Background(
+          height: screenHeight,
+          colors: const [Color(0xFF4CD964), Colors.white],
+          stops: const [0.0, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          heroTag: 'top_green_gradient',
+        ),
+        _buildContent(),
+      ],
+    ),
+    bottomNavigationBar: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: _buildStartSessionButton(),
+        ),
+        CustomBottomNavBar(
+          items: _navItems,
+          currentIndex: _selectedIndex,
+          onIndexChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+        ),
+      ],
+    ),
+  );
+}
 
-    return Scaffold(
-      body: Background(
-        height: gradientHeight,
-        colors: const [Color(0xFF4CD964), Colors.white],
-        child: _buildContent(),
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: _buildStartSessionButton(),
-          ),
-          CustomBottomNavBar(
-            items: _navItems,
-            currentIndex: _selectedIndex,
-            onIndexChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
   Widget _buildSkeletonUI() {
     return ShimmerLoading(
       child: Column(
