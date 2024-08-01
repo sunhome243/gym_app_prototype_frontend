@@ -69,7 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Stack(
+        body: SingleChildScrollView(
+            child: SizedBox(
+      height: size.height,
+      child: Stack(
         children: [
           // Background gradients
           Positioned(
@@ -118,52 +121,39 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          SafeArea(
-            child: Stack(
-              children: [
-                // Content Box
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.28,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      children: [
-                        // Login box
-                        Hero(
-                          tag: 'content_box',
-                          child: Material(
-                            color: Colors.transparent,
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 400),
-                              child: _buildLoginBox(),
+              SafeArea(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: size.height),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child: Column(
+                        children: [
+                          SizedBox(height: size.height * 0.12),
+                          _buildLogo(),
+                          SizedBox(height: size.height * 0.08),
+                          Hero(
+                            tag: 'contentBox',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: Container(
+                                constraints: const BoxConstraints(maxWidth: 400),
+                                child: _buildLoginBox(),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 5),
-                        // Sign up button
-                        _buildSignUpButton(),
-                        SizedBox(height: size.height * 0.16),
-                      ],
+                          const SizedBox(height: 20),
+                          _buildSignUpButton(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                // Logo
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.12,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildLogo(),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        )
+      )
     );
   }
 
@@ -201,68 +191,72 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Welcome Back 🔥',
-                style: GoogleFonts.lato(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF333333),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              _buildTextField(_emailController, 'Email', Icons.email),
-              const SizedBox(height: 16),
-              _buildTextField(_passwordController, 'Password', Icons.lock,
-                  isPassword: true),
-              const SizedBox(height: 24),
-              if (_errorMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    _errorMessage,
-                    style: GoogleFonts.lato(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red,
-                    ),
-                    textAlign: TextAlign.center,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Welcome Back 🔥',
+                  style: GoogleFonts.lato(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF333333),
                   ),
+                  textAlign: TextAlign.center,
                 ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007AFF),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        'Log In',
-                        style: GoogleFonts.lato(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
+                const SizedBox(height: 24),
+                _buildTextField(_emailController, 'Email', Icons.email),
+                const SizedBox(height: 16),
+                _buildTextField(_passwordController, 'Password', Icons.lock,
+                    isPassword: true),
+                const SizedBox(height: 24),
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _errorMessage,
+                      style: GoogleFonts.lato(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
                       ),
-              ),
-            ],
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                SizedBox(
+                  height: 48, // 버튼 높이 고정
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF007AFF),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Log In',
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -338,15 +332,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              'Sign Up',
-              style: GoogleFonts.lato(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF007AFF),
-              ),
+          child: Text(
+            'Sign Up',
+            style: GoogleFonts.lato(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF007AFF),
             ),
           ),
         ),

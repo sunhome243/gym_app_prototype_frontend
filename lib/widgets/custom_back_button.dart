@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 
 class CustomBackButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-
-  const CustomBackButton({super.key, this.onPressed});
+  const CustomBackButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 20,
-      left: 20,
-      child: InkWell(
-        onTap: onPressed ?? () => Navigator.of(context).pop(),
-        child: const Icon(
-          Icons.arrow_back_ios_new,
-          size: 24,
-          color: Colors.black87,
+    return Hero(
+      tag: 'backButton',
+      child: Material(
+        color: Colors.transparent,
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          behavior: HitTestBehavior.opaque,
+          child: const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Icon(
+              Icons.arrow_back_ios,
+              size: 24,
+              color: Color(0xFF333333),
+            ),
+          ),
         ),
       ),
     );

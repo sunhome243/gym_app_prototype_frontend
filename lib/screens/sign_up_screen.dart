@@ -7,14 +7,10 @@ import '../widgets/custom_back_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String userType;
-  final Alignment backgroundGradientAlignment;
-  final double backgroundGradientSize;
 
   const SignUpScreen({
     super.key,
     required this.userType,
-    this.backgroundGradientAlignment = Alignment.center,
-    this.backgroundGradientSize = 1,
   });
 
   @override
@@ -71,8 +67,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      body: Stack(
+        body: SingleChildScrollView(
+            child: SizedBox(
+      height: size.height,
+      child: Stack(
         children: [
           // Background gradient
           Positioned.fill(
@@ -83,8 +84,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    center: widget.backgroundGradientAlignment,
-                    radius: widget.backgroundGradientSize,
+                    center: Alignment.topLeft,
+                    radius: 1.5,
                     colors: [
                       widget.userType == 'Trainer'
                           ? const Color(0xFF6EB6FF)
@@ -98,156 +99,167 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 16, left: 16),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: CustomBackButton(),
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: size.height),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+                      SizedBox(height: size.height * 0.12),
+                      _buildLogo(),
+                      SizedBox(height: size.height * 0.08),
+                      Hero(
+                        tag: 'contentBox',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: _buildSignUpForm(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 40),
-                          Hero(
-                            tag: 'logo',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Text(
-                                'FitSync',
-                                style: GoogleFonts.pacifico(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w400,
-                                  color: const Color(0xFF333333),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Sign Up as ${widget.userType}',
-                            style: GoogleFonts.lato(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 40),
-                          Hero(
-                            tag: 'content_box',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24.0),
-                                  child: Form(
-                                    key: _formKey,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _buildInputField(
-                                          controller: _firstNameController,
-                                          label: 'First Name',
-                                          icon: Icons.person_outline,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildInputField(
-                                          controller: _lastNameController,
-                                          label: 'Last Name',
-                                          icon: Icons.person_outline,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildInputField(
-                                          controller: _emailController,
-                                          label: 'Email',
-                                          icon: Icons.email_outlined,
-                                          keyboardType: TextInputType.emailAddress,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildInputField(
-                                          controller: _passwordController,
-                                          label: 'Password',
-                                          icon: Icons.lock_outline,
-                                          isPassword: true,
-                                        ),
-                                        const SizedBox(height: 24),
-                                        if (_errorMessage.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(bottom: 16),
-                                            child: Text(
-                                              _errorMessage,
-                                              style: GoogleFonts.lato(
-                                                color: Colors.red,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ElevatedButton(
-                                          onPressed: _isLoading ? null : _signUp,
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(30),
-                                            ),
-                                            backgroundColor: widget.userType == 'Trainer'
-                                                ? const Color(0xFF6EB6FF)
-                                                : const Color(0xFF4CD964),
-                                          ),
-                                          child: _isLoading
-                                              ? const SizedBox(
-                                                  height: 20,
-                                                  width: 20,
-                                                  child: CircularProgressIndicator(
-                                                    color: Colors.white,
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : Text(
-                                                  'Sign Up',
-                                                  style: GoogleFonts.lato(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: const CustomBackButton(),
+          ),
+        ],
+      ),
+    )));
+  }
+
+  Widget _buildLogo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Hero(
+          tag: 'logo',
+          child: Material(
+            color: Colors.transparent,
+            child: Text(
+              'FitSync',
+              style: GoogleFonts.pacifico(
+                fontSize: 48,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Sign Up as ${widget.userType}',
+          style: GoogleFonts.lato(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpForm() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildInputField(
+                  controller: _firstNameController,
+                  label: 'First Name',
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _lastNameController,
+                  label: 'Last Name',
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _emailController,
+                  label: 'Email',
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  icon: Icons.lock_outline,
+                  isPassword: true,
+                ),
+                const SizedBox(height: 24),
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _errorMessage,
+                      style: GoogleFonts.lato(
+                        color: Colors.red,
                       ),
+                      textAlign: TextAlign.center,
                     ),
+                  ),
+                SizedBox(
+                  height: 48, // 버튼 높이 고정
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _signUp,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      backgroundColor: widget.userType == 'Trainer'
+                          ? const Color(0xFF6EB6FF)
+                          : const Color(0xFF4CD964),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Sign Up',
+                            style: GoogleFonts.lato(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -299,7 +311,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             width: 2,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       style: GoogleFonts.lato(),
       validator: (value) {

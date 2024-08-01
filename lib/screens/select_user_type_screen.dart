@@ -8,86 +8,88 @@ class SelectUserTypeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradients (same as login screen)
+          // Background gradients (same as before)
           Positioned(
-            right: -MediaQuery.of(context).size.width * 1.3,
-            bottom: -MediaQuery.of(context).size.height * 1.4,
-            child: Hero(
-              tag: 'background_bottom',
-              child: Container(
-                width: MediaQuery.of(context).size.width * 3,
-                height: MediaQuery.of(context).size.height * 3,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF4CD964),
-                      Colors.white.withOpacity(0)
-                    ],
-                    stops: const [0.0, 0.7],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -MediaQuery.of(context).size.width * 1.3,
-            top: -MediaQuery.of(context).size.height * 1.4,
-            child: Hero(
-              tag: 'background_top',
-              child: Container(
-                width: MediaQuery.of(context).size.width * 3,
-                height: MediaQuery.of(context).size.height * 3,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF6EB6FF),
-                      Colors.white.withOpacity(0)
-                    ],
-                    stops: const [0.0, 0.7],
-                  ),
-                ),
-              ),
-            ),
-          ),
-                    SafeArea(
-            child: Stack(
-              children: [
-                // Logo
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.12,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildLogo(),
-                  ),
-                ),
-
-                // Content Box
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.28,
-                  left: 0,
-                  right: 0,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Center(
-                      child: _buildContent(context),
+            right: -size.width * 1.3,
+            bottom: -size.height * 1.4,
+            child: SizedBox(
+              width: size.width * 3,
+              height: size.height * 3,
+              child: Hero(
+                tag: 'background_bottom',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4CD964),
+                        Colors.white.withOpacity(0)
+                      ],
+                      stops: const [0.0, 0.7],
                     ),
                   ),
                 ),
-
-                // CustomBackButton (unchanged)
-                const Positioned(
-                  top: 16,
-                  left: 16,
-                  child: CustomBackButton(),
-                ),
-              ],
+              ),
             ),
+          ),
+          Positioned(
+            left: -size.width * 1.3,
+            top: -size.height * 1.4,
+            child: SizedBox(
+              width: size.width * 3,
+              height: size.height * 3,
+              child: Hero(
+                tag: 'background_top',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF6EB6FF),
+                        Colors.white.withOpacity(0)
+                      ],
+                      stops: const [0.0, 0.7],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: size.height),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    children: [
+                      SizedBox(height: size.height * 0.12),
+                      _buildLogo(),
+                      SizedBox(height: size.height * 0.08),
+                      Hero(
+                        tag: 'contentBox',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: _buildContent(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Add CustomBackButton
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: const CustomBackButton(),
           ),
         ],
       ),
@@ -124,67 +126,56 @@ class SelectUserTypeScreen extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    return Hero(
-      tag: 'content_box',
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'I am a...',
-                style: GoogleFonts.lato(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF333333),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              _buildUserTypeCard(
-                context,
-                'Trainer',
-                'Guide and motivate others',
-                const Color(0xFF007AFF),
-                Icons.fitness_center,
-              ),
-              const SizedBox(height: 24),
-              _buildUserTypeCard(
-                context,
-                'Member',
-                'Achieve your fitness goals',
-                const Color(0xFF4CD964),
-                Icons.directions_run,
-              ),
-            ],
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'I am a...',
+            style: GoogleFonts.lato(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333),
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
+          const SizedBox(height: 20),
+          _buildUserTypeCard(
+            context,
+            'Trainer',
+            'Guide and motivate others',
+            const Color(0xFF007AFF),
+            Icons.fitness_center,
+          ),
+          const SizedBox(height: 16),
+          _buildUserTypeCard(
+            context,
+            'Member',
+            'Achieve your fitness goals',
+            const Color(0xFF4CD964),
+            Icons.directions_run,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildUserTypeCard(
-      BuildContext context,
-      String title,
-      String description,
-      Color color,
-      IconData icon) {
+  Widget _buildUserTypeCard(BuildContext context, String title,
+      String description, Color color, IconData icon) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -203,7 +194,7 @@ class SelectUserTypeScreen extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(15),
         child: Ink(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(15),
@@ -217,9 +208,9 @@ class SelectUserTypeScreen extends StatelessWidget {
                   color: color,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: Colors.white, size: 32),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,13 +218,13 @@ class SelectUserTypeScreen extends StatelessWidget {
                     Text(
                       title,
                       style: GoogleFonts.lato(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: color,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       description,
                       style: GoogleFonts.lato(
@@ -246,7 +237,7 @@ class SelectUserTypeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, color: color),
+              Icon(Icons.arrow_forward_ios, color: color, size: 18),
             ],
           ),
         ),
