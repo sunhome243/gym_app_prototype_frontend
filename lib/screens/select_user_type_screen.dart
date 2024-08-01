@@ -3,48 +3,30 @@ import 'package:google_fonts/google_fonts.dart';
 import 'sign_up_screen.dart';
 import '../widgets/custom_back_button.dart';
 
-class SelectUserTypeScreen extends StatefulWidget {
+class SelectUserTypeScreen extends StatelessWidget {
   const SelectUserTypeScreen({super.key});
 
   @override
-  _SelectUserTypeScreenState createState() => _SelectUserTypeScreenState();
-}
-
-class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
-    _animationController.forward();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Stack(
         children: [
-          // Background ellipses
+          // Background gradients (same as login screen)
           Positioned(
-            right: -size.width * 1.5,
-            bottom: -size.height * 1,
+            right: -MediaQuery.of(context).size.width * 1.3,
+            bottom: -MediaQuery.of(context).size.height * 1.4,
             child: Hero(
               tag: 'background_bottom',
               child: Container(
-                width: size.width * 4,
-                height: size.width * 4,
+                width: MediaQuery.of(context).size.width * 3,
+                height: MediaQuery.of(context).size.height * 3,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [const Color(0xFF4CD964), Colors.white.withOpacity(0)],
+                    colors: [
+                      const Color(0xFF4CD964),
+                      Colors.white.withOpacity(0)
+                    ],
                     stops: const [0.0, 0.7],
                   ),
                 ),
@@ -52,56 +34,58 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
             ),
           ),
           Positioned(
-            left: -size.width * 1.5,
-            top: -size.height * 0.9,
+            left: -MediaQuery.of(context).size.width * 1.3,
+            top: -MediaQuery.of(context).size.height * 1.4,
             child: Hero(
               tag: 'background_top',
               child: Container(
-                width: size.width * 4,
-                height: size.width * 4,
+                width: MediaQuery.of(context).size.width * 3,
+                height: MediaQuery.of(context).size.height * 3,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [const Color(0xFF6EB6FF), Colors.white.withOpacity(0)],
+                    colors: [
+                      const Color(0xFF6EB6FF),
+                      Colors.white.withOpacity(0)
+                    ],
                     stops: const [0.0, 0.7],
                   ),
                 ),
               ),
             ),
           ),
-
-          // Content
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildLogo(),
-                      const SizedBox(height: 30),
-                      _buildContent(context),
-                    ],
+            child: Stack(
+              children: [
+                // 로고를 상단에 위치시키고 Center 위젯으로 가운데 정렬
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.15,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: _buildLogo(),
                   ),
                 ),
-              ),
+
+                // Content Box 위치 조정
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.28, // 위치 조정
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: _buildContent(context),
+                  ),
+                ),
+
+                // CustomBackButton (좌측 상단)
+                const Positioned(
+                  top: 16,
+                  left: 16,
+                  child: CustomBackButton(),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CustomBackButton(),
-          Spacer(),
-          SizedBox(width: 40), // To balance the back button
         ],
       ),
     );
@@ -109,6 +93,7 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
 
   Widget _buildLogo() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Hero(
           tag: 'logo',
@@ -121,11 +106,11 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
           'Choose Your Fitness Path',
           style: GoogleFonts.lato(
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
@@ -142,6 +127,7 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
         color: Colors.transparent,
         child: Container(
           width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 400),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -155,6 +141,7 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
             ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -169,18 +156,18 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
               const SizedBox(height: 24),
               _buildUserTypeCard(
                 context,
-                'Trainer',
-                'Guide and motivate others',
+                'Member',
+                'Achieve your fitness goals',
                 const Color(0xFF007AFF),
-                Icons.fitness_center,
+                Icons.directions_run,
               ),
               const SizedBox(height: 16),
               _buildUserTypeCard(
                 context,
-                'Member',
-                'Achieve your fitness goals',
+                'Trainer',
+                'Guide and motivate others',
                 const Color(0xFF4CD964),
-                Icons.directions_run,
+                Icons.fitness_center,
               ),
             ],
           ),
@@ -189,68 +176,78 @@ class _SelectUserTypeScreenState extends State<SelectUserTypeScreen> with Single
     );
   }
 
-Widget _buildUserTypeCard(BuildContext context, String title, String description, Color color, IconData icon) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => SignUpScreen(userType: title),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(15),
-      child: Ink(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color, width: 2),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 40),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.lato(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    description,
-                    style: GoogleFonts.lato(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildUserTypeCard(
+      BuildContext context,
+      String title,
+      String description,
+      Color color,
+      IconData icon) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  SignUpScreen(userType: title),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
             ),
-            Icon(Icons.arrow_forward_ios, color: color),
-          ],
+          );
+        },
+        borderRadius: BorderRadius.circular(15),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.white, size: 32),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.lato(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      description,
+                      style: GoogleFonts.lato(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, color: color),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+    );
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import 'member_home_screen.dart';
-import 'trainer_home_screen.dart';
 import 'package:provider/provider.dart';
 import 'select_user_type_screen.dart';
+import 'member_home_screen.dart';
+import 'trainer_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,14 +39,16 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-
         Map<String, dynamic> userInfo = await _auth.getCurrentUserInfo();
         String userRole = userInfo['role'];
-
-        Widget homeScreen = userRole == 'trainer'
-            ? const TrainerHomeScreen()
-            : const MemberHomeScreen();
-
+        Widget homeScreen;
+        if (userRole == 'trainer') {
+          homeScreen = const TrainerHomeScreen();
+        } else if (userRole == 'member') {
+          homeScreen = const MemberHomeScreen();
+        } else {
+          throw Exception('Invalid user role');
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => homeScreen),
         );
@@ -69,20 +71,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background (unchanged)
+          // Background gradients
           Positioned(
             right: -size.width * 1.5,
-            bottom: -size.height * 1,
-            child: Hero(
-              tag: 'background_bottom',
-              child: Container(
-                width: size.width * 4,
-                height: size.width * 4,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [const Color(0xFF4CD964), Colors.white.withOpacity(0)],
-                    stops: const [0.0, 0.7],
+            bottom: -size.height * 2,
+            child: SizedBox(
+              width: size.width * 4,
+              height: size.height * 4,
+              child: Hero(
+                tag: 'background_bottom',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4CD964),
+                        Colors.white.withOpacity(0)
+                      ],
+                      stops: const [0.0, 0.7],
+                    ),
                   ),
                 ),
               ),
@@ -90,40 +97,66 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           Positioned(
             left: -size.width * 1.5,
-            top: -size.height * 0.9,
-            child: Hero(
-              tag: 'background_top',
-              child: Container(
-                width: size.width * 4,
-                height: size.width * 4,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [const Color(0xFF6EB6FF), Colors.white.withOpacity(0)],
-                    stops: const [0.0, 0.7],
+            top: -size.height * 2,
+            child: SizedBox(
+              width: size.width * 4,
+              height: size.height * 4,
+              child: Hero(
+                tag: 'background_top',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF6EB6FF),
+                        Colors.white.withOpacity(0)
+                      ],
+                      stops: const [0.0, 0.7],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-
-          // Content
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildLogo(),
-                      const SizedBox(height: 40),
-                      _buildLoginForm(),
-                    ],
+            child: Stack(
+              children: [
+                // Content Box를 아래에 배치
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.28,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Column(
+                      children: [
+                        // Login box
+                        Hero(
+                          tag: 'content_box',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: _buildLoginBox(),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        // Sign up button
+                        _buildSignUpButton(),
+                        SizedBox(height: size.height * 0.16),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                // 로고를 상단에 위치시키고 Center 위젯으로 가운데 정렬
+                Positioned(
+                  top: MediaQuery.of(context).size.height * 0.15,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: _buildLogo(),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -133,6 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildLogo() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Hero(
           tag: 'logo',
@@ -145,73 +179,89 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          'Your fitness journey starts here!',
-          style: GoogleFonts.lato(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
-          textAlign: TextAlign.center,
-        ),
       ],
     );
   }
 
-  Widget _buildLoginForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTextField(_emailController, 'Email', Icons.email),
-          const SizedBox(height: 16),
-          _buildTextField(_passwordController, 'Password', Icons.lock, isPassword: true),
-          const SizedBox(height: 24),
-          if (_errorMessage.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Text(
-                _errorMessage,
+  Widget _buildLoginBox() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Welcome Back 🔥',
                 style: GoogleFonts.lato(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.red,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF333333),
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _login,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    'Log In',
+              const SizedBox(height: 24),
+              _buildTextField(_emailController, 'Email', Icons.email),
+              const SizedBox(height: 16),
+              _buildTextField(_passwordController, 'Password', Icons.lock,
+                  isPassword: true),
+              const SizedBox(height: 24),
+              if (_errorMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _errorMessage,
                     style: GoogleFonts.lato(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
                     ),
+                    textAlign: TextAlign.center,
                   ),
+                ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF007AFF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Log In',
+                        style: GoogleFonts.lato(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildSignUpButton(),
-        ],
+        ),
       ),
     );
   }
@@ -243,12 +293,13 @@ class _LoginScreenState extends State<LoginScreen> {
               )
             : null,
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: Colors.grey[100],
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -277,18 +328,22 @@ class _LoginScreenState extends State<LoginScreen> {
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     const SelectUserTypeScreen(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
               ),
             );
           },
-          child: Text(
-            'Sign Up',
-            style: GoogleFonts.lato(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF007AFF),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'Sign Up',
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF007AFF),
+              ),
             ),
           ),
         ),
