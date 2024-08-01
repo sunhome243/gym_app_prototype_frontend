@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: Stack(
               children: [
-                // Content Box를 아래에 배치
+                // Content Box
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.28,
                   left: 0,
@@ -136,7 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           tag: 'content_box',
                           child: Material(
                             color: Colors.transparent,
-                            child: _buildLoginBox(),
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 400),
+                              child: _buildLoginBox(),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -147,9 +150,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                // 로고를 상단에 위치시키고 Center 위젯으로 가운데 정렬
+                // Logo
                 Positioned(
-                  top: MediaQuery.of(context).size.height * 0.15,
+                  top: MediaQuery.of(context).size.height * 0.12,
                   left: 0,
                   right: 0,
                   child: Center(

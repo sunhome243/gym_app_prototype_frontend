@@ -54,12 +54,12 @@ class SelectUserTypeScreen extends StatelessWidget {
               ),
             ),
           ),
-          SafeArea(
+                    SafeArea(
             child: Stack(
               children: [
-                // 로고를 상단에 위치시키고 Center 위젯으로 가운데 정렬
+                // Logo
                 Positioned(
-                  top: MediaQuery.of(context).size.height * 0.15,
+                  top: MediaQuery.of(context).size.height * 0.12,
                   left: 0,
                   right: 0,
                   child: Center(
@@ -67,17 +67,20 @@ class SelectUserTypeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Content Box 위치 조정
+                // Content Box
                 Positioned(
-                  top: MediaQuery.of(context).size.height * 0.28, // 위치 조정
+                  top: MediaQuery.of(context).size.height * 0.28,
                   left: 0,
                   right: 0,
-                  child: Center(
-                    child: _buildContent(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Center(
+                      child: _buildContent(context),
+                    ),
                   ),
                 ),
 
-                // CustomBackButton (좌측 상단)
+                // CustomBackButton (unchanged)
                 const Positioned(
                   top: 16,
                   left: 16,
@@ -156,18 +159,18 @@ class SelectUserTypeScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _buildUserTypeCard(
                 context,
-                'Member',
-                'Achieve your fitness goals',
-                const Color(0xFF007AFF),
-                Icons.directions_run,
-              ),
-              const SizedBox(height: 16),
-              _buildUserTypeCard(
-                context,
                 'Trainer',
                 'Guide and motivate others',
-                const Color(0xFF4CD964),
+                const Color(0xFF007AFF),
                 Icons.fitness_center,
+              ),
+              const SizedBox(height: 24),
+              _buildUserTypeCard(
+                context,
+                'Member',
+                'Achieve your fitness goals',
+                const Color(0xFF4CD964),
+                Icons.directions_run,
               ),
             ],
           ),
