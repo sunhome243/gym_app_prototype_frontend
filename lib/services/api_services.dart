@@ -72,12 +72,16 @@ class ApiService {
           response.statusCode == 307) {
         final redirectUrl = response.headers['location'];
         if (redirectUrl != null) {
-          print('Redirecting to: $redirectUrl'); // 추가된 로그
+          if (kDebugMode) {
+            print('Redirecting to: $redirectUrl');
+          }
           url = Uri.parse(redirectUrl);
           response =
               await http.post(url, headers: headers, body: jsonEncode(body));
         } else {
-          print('Redirect URL is null'); // 추가된 로그
+          if (kDebugMode) {
+            print('Redirect URL is null');
+          }
         }
       }
 
@@ -110,23 +114,35 @@ class ApiService {
   Future<List<SessionWithSets>> getSessions() async {
     try {
       final userId = await getUserId();
-      print('Fetching sessions for user ID: $userId'); // Debug print
+      if (kDebugMode) {
+        print('Fetching sessions for user ID: $userId');
+      }
 
       final response = await _request('workout', 'get_sessions/$userId', 'GET');
-      print('Raw API response: $response'); // Debug print
+      if (kDebugMode) {
+        print('Raw API response: $response');
+      }
 
       if (response is List) {
         final sessions = response.map((session) => SessionWithSets.fromJson(session)).toList();
-        print('Parsed ${sessions.length} sessions'); // Debug print
+        if (kDebugMode) {
+          print('Parsed ${sessions.length} sessions');
+        }
         return sessions;
       } else {
-        print('Unexpected response format: ${response.runtimeType}'); // Debug print
+        if (kDebugMode) {
+          print('Unexpected response format: ${response.runtimeType}');
+        }
         throw Exception('Unexpected response format: ${response.runtimeType}');
       }
     } catch (e) {
-      print('Error in getSessions: $e'); // Enhanced error logging
+      if (kDebugMode) {
+        print('Error in getSessions: $e');
+      }
       if (e is FormatException) {
-        print('JSON parsing error: ${e.source}');
+        if (kDebugMode) {
+          print('JSON parsing error: ${e.source}');
+        }
       }
       rethrow;
     }
@@ -156,35 +172,73 @@ class ApiService {
         'initial_sessions': initialSessions,
       });
       
-      print("API Response: $response"); // 디버그 로그
+      if (kDebugMode) {
+        print("API Response: $response");
+      }
       
       if (response['id'] != null) {
-        print("Mapping request successful"); // 디버그 로그
-        return; // 성공적으로 처리됨
+        if (kDebugMode) {
+          print("Mapping request successful");
+        }
+        return;
       } else {
         throw Exception('Unexpected response format');
       }
     } catch (e) {
-      print("Error in requestTrainerMemberMapping: $e"); // 디버그 로그
-      rethrow; // 예외를 다시 던져서 호출자가 처리할 수 있도록 함
+      if (kDebugMode) {
+        print("Error in requestTrainerMemberMapping: $e");
+      }
+      rethrow;
     }
   }
 
   Future<void> updateTrainerMemberMappingStatus(int mappingId, String newStatus) async {
-  await _request('user', 'trainer-member-mapping/$mappingId/status', 'PATCH', body: {
-    'new_status': newStatus,
+    await _request('user', 'trainer-member-mapping/$mappingId/status', 'PATCH', body: {
+      'new_status': newStatus,
     });
   }
 
-  Future<int> getRemainingSessionsForMember(String memberEmail) async {
-    final response = await _request('user', 'trainer-member-mapping/$memberEmail/sessions', 'GET');
+  Future<int> getRemainingSessionsForMember(String uid) async {
+    final response = await _request('user', 'trainer-member-mapping/$uid/sessions', 'GET');
     return response['remaining_sessions'] as int;
   }
-
 
   Future<void> removeTrainerMemberMapping(String otherEmail) async {
     await _request('user', 'trainer-member-mapping/$otherEmail', 'DELETE');
   }
+
+  Future<void> requestMoreSessions(String trainerUid, int additionalSessions) async {
+    try {
+      final response = await _request('user', 'request-more-sessions/$trainerUid', 'POST', body: {
+        'additional_sessions': additionalSessions,
+      });
+      
+      if (kDebugMode) {
+        print("API Response: $response");
+      }
+      
+      if (response['message'] != null) {
+        if (kDebugMode) {
+          print("Session request successful");
+        }
+        return;
+      } else {
+        throw Exception('Unexpected response format');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error in requestMoreSessions: $e");
+      }
+      rethrow;
+    }
+  }
+
+Future<void> addFCMToken(String token) async {
+  await _request('user', 'add-fcm-token', 'POST', body: {'token': token});
 }
 
-
+Future<void> removeFCMToken(String token) async {
+  await _request('user', 'remove-fcm-token', 'POST', body: {'token': token});
+}
+  
+}

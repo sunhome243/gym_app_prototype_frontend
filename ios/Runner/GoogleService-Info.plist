@@ -29,7 +29,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:121401963302:ios:4a3862411ece938f2cc7e7</string>
+	<string>1:121401963302:ios:c96611cd6fc5ab522cc7e7</string>
 	<key>DATABASE_URL</key>
 	<string>https://fitsync-app-c93ad-default-rtdb.firebaseio.com</string>
 </dict>

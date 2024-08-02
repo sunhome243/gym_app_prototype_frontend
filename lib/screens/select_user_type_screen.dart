@@ -9,11 +9,12 @@ class SelectUserTypeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradients (same as before)
+          // Background gradients
           Positioned(
             right: -size.width * 1.3,
             bottom: -size.height * 1.4,
@@ -60,35 +61,42 @@ class SelectUserTypeScreen extends StatelessWidget {
               ),
             ),
           ),
-          Center(
+          SafeArea(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                SizedBox(height: size.height * 0.01),
+                _buildLogo(),
                 Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      SizedBox(height: size.height * 0.0625), // 1/4 of the upper quarter
-                      _buildLogo(),
-                      SizedBox(height: size.height * 0.1875), // 3/4 of the upper quarter
+                      SizedBox(height: size.height * 0.15),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Hero(
+                              tag: 'contentBox',
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Container(
+                                  constraints: const BoxConstraints(maxWidth: 400),
+                                  child: _buildContent(context),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: size.height * 0.05),
                     ],
                   ),
                 ),
-                Hero(
-                  tag: 'contentBox',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: _buildContent(context),
-                  ),
-                ),
-                const Expanded(child: SizedBox()), // To balance the layout
               ],
             ),
           ),
           
-          // Add CustomBackButton
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: topPadding + 16,
             left: 16,
             child: const CustomBackButton(),
           ),
@@ -97,18 +105,23 @@ class SelectUserTypeScreen extends StatelessWidget {
     );
   }
 
+
   Widget _buildLogo() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Hero(
           tag: 'logo',
-          child: Text(
-            'FitSync',
-            style: GoogleFonts.pacifico(
-              fontSize: 48,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF333333),
+          child: Material(
+            color: Colors.transparent,
+            child: Text(
+              'FitSync',
+              style: GoogleFonts.pacifico(
+                fontSize: 48,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ),

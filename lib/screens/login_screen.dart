@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'select_user_type_screen.dart';
 import 'member_home_screen.dart';
 import 'trainer_home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,6 +28,27 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _auth = Provider.of<AuthService>(context, listen: false);
   }
+
+String _getErrorMessage(FirebaseAuthException e) {
+  switch (e.code) {
+    case 'user-not-found':
+      return 'Oops! No account with that email. Double-check your email or create a new account!';
+    case 'wrong-password':
+      return 'Uh-oh! That password doesn’t match. Give it another shot!';
+    case 'invalid-email':
+      return 'Hmm, that doesn’t look like a valid email. Can you check it again?';
+    case 'user-disabled':
+      return 'This account has been put on pause. Reach out to support for help!';
+    case 'too-many-requests':
+      return 'Whoa, slow down! Too many attempts. Please wait a bit before trying again.';
+    case 'operation-not-allowed':
+      return 'Email sign-in isn’t switched on right now. Contact support if you need assistance.';
+    case 'network-request-failed':
+      return 'Yikes! Network hiccup. Check your internet and try again.';
+    default:
+      return 'Something went wrong. Give it another try in a bit!';
+  }
+}
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -52,9 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => homeScreen),
         );
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          _errorMessage = _getErrorMessage(e);
+        });
       } catch (e) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = 'An unexpected error occurred. Please try again.';
         });
       } finally {
         setState(() {
@@ -64,17 +90,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-        body: SingleChildScrollView(
-            child: SizedBox(
-      height: size.height,
-      child: Stack(
+      body: Stack(
         children: [
-          // Background gradients
+          // Background gradients (그대로 유지)
           Positioned(
             right: -size.width * 1.5,
             bottom: -size.height * 2,
@@ -121,41 +145,37 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          Center(
+          SafeArea(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                SizedBox(height: size.height * 0.01), // 상단 여백 조정
+                _buildLogo(),
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                          height:
-                              size.height * 0.0625), // 1/4 of the upper quarter
-                      _buildLogo(),
-                      SizedBox(
-                          height:
-                              size.height * 0.1875), // 3/4 of the upper quarter
-                    ],
-                  ),
-                ),
-                Hero(
-                  tag: 'contentBox',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: _buildLoginBox(),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: size.height * 0.05), // 로고와 컨텐츠 박스 사이 간격 조정
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Hero(
+                              tag: 'contentBox',
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Container(
+                                  constraints: const BoxConstraints(maxWidth: 400),
+                                  child: _buildLoginBox(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          _buildSignUpButton(),
+                          SizedBox(height: size.height * 0.1), // 하단 여백 추가
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildSignUpButton(),
-                    ],
                   ),
                 ),
               ],
@@ -163,25 +183,23 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-    )));
+    );
   }
 
   Widget _buildLogo() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Hero(
-          tag: 'logo',
-          child: Text(
-            'FitSync',
-            style: GoogleFonts.pacifico(
-              fontSize: 48,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF333333),
-            ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10), // 로고 하단 패딩 감소
+      child: Hero(
+        tag: 'logo',
+        child: Text(
+          'FitSync',
+          style: GoogleFonts.pacifico(
+            fontSize: 48,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF333333),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -236,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 SizedBox(
-                  height: 48, // 버튼 높이 고정
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(

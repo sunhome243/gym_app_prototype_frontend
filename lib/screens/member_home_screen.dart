@@ -6,17 +6,17 @@ import '../widgets/animated_inkwell.dart';
 import 'all_sessions_screen.dart';
 import 'member_profile_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import '../widgets/background.dart';
 import '../widgets/skeleton_ui_widgets.dart';
+import 'manage_trainer.dart';
 
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _MemberHomeScreenState createState() => _MemberHomeScreenState();
 }
 
-class _HomeScreenState extends State<MemberHomeScreen> {
+class _MemberHomeScreenState extends State<MemberHomeScreen> {
   int _selectedIndex = 1;
   Map<String, dynamic>? _userInfo;
   bool _isLoading = true;
@@ -49,117 +49,141 @@ class _HomeScreenState extends State<MemberHomeScreen> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  final screenHeight = MediaQuery.of(context).size.height;
-  final gradientHeight = screenHeight / 3;
-  
-  return Scaffold(
-    body: Stack(
-      children: [
-        Background(
-          height: screenHeight,
-          colors: const [Color(0xFF4CD964), Colors.white],
-          stops: const [0.0, 1.0],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          heroTag: 'top_green_gradient',
-        ),
-        _buildContent(),
-      ],
-    ),
-    bottomNavigationBar: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: _buildStartSessionButton(),
-        ),
-        CustomBottomNavBar(
-          items: _navItems,
-          currentIndex: _selectedIndex,
-          onIndexChanged: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildSkeletonUI() {
-    return ShimmerLoading(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
         children: [
-          _buildSkeletonHeader(),
-          const Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SkeletonCard(),
-                    SizedBox(height: 20),
-                    SkeletonCard(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSkeletonHeader() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
+          _buildBackground(),
+          SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonText(width: 200, height: 24),
-                SizedBox(height: 8),
-                SkeletonText(width: 150, height: 16),
+                Expanded(
+                  child: _isLoading ? _buildSkeletonUI() : _buildContent(),
+                ),
+                _buildStartSessionButton(),
               ],
             ),
           ),
-          SkeletonAvatar(),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        items: _navItems,
+        currentIndex: _selectedIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildBackground() {
+    return Hero(
+      tag: 'background_top',
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF4CD964), Colors.white],
+            stops: [0.0, 0.5],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonUI() {
+    return const ShimmerLoading(
+      child: Column(
+        children: [
+          SkeletonCard(),
+          SizedBox(height: 20),
+          SkeletonCard(),
+          SizedBox(height: 20),
+          SkeletonCard(),
         ],
       ),
     );
   }
+
   Widget _buildContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildQuickActions(),
+          const SizedBox(height: 24),
+          _buildWorkoutSummary(),
+          const SizedBox(height: 24),
+          _buildRecentSessionsCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final firstName = _userInfo?['first_name'] ?? 'Member';
+    final greeting = _getGreeting();
+    final motivationalPhrase = _getMotivationalPhrase();
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRecordsCard(),
-                  const SizedBox(height: 20),
-                  _buildRecentSessionsCard(),
-                  const SizedBox(height: 100), // Space for the fixed button
+                  Text(
+                    '$greeting, $firstName!',
+                    style: GoogleFonts.lato(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    motivationalPhrase,
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
+            AnimatedInkWell(
+              onTap: () {
+                // TODO: Implement notification functionality
+              },
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withOpacity(0.1),
+                ),
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Colors.black,
+                  size: 28,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
-
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -183,56 +207,50 @@ Widget build(BuildContext context) {
     return phrases[DateTime.now().microsecond % phrases.length];
   }
 
-  Widget _buildHeader() {
-    final firstName = _userInfo?['first_name'] ?? 'Member';
-    final greeting = _getGreeting();
-    final motivationalPhrase = _getMotivationalPhrase();
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildQuickActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildQuickActionButton(Icons.fitness_center, 'Workouts', () {}),
+        _buildQuickActionButton(Icons.insights, 'Progress', () {}),
+        _buildQuickActionButton(Icons.person, 'Trainer', () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const ManageTrainerScreen()),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionButton(
+      IconData icon, String label, VoidCallback onTap) {
+    return AnimatedInkWell(
+      onTap: onTap,
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$greeting, $firstName!',
-                  style: GoogleFonts.lato(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  motivationalPhrase,
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black54,
-                  ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
+            child: Icon(icon, size: 30, color: const Color(0xFF4CD964)),
           ),
-          AnimatedInkWell(
-            onTap: () {
-              // TODO: Implement notification functionality
-            },
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                color: Colors.black,
-                size: 28,
-              ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -240,51 +258,31 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildRecordsCard() {
+  Widget _buildWorkoutSummary() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'My Records',
+              'This Week\'s Progress',
               style: GoogleFonts.lato(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-            Text(
-              'Weekly Workout Progress',
-              style: GoogleFonts.lato(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  'Graph will be implemented here',
-                  style: GoogleFonts.lato(color: Colors.grey[600]),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Implement view all functionality
-                },
-                child: const Text('View All'),
-              ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildProgressItem('Workouts', '4/5'),
+                _buildProgressItem('Calories', '1,200'),
+                _buildProgressItem('Time', '3h 45m'),
+              ],
             ),
           ],
         ),
@@ -292,42 +290,73 @@ Widget build(BuildContext context) {
     );
   }
 
+  Widget _buildProgressItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.lato(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF4CD964),
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.lato(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRecentSessionsCard() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Most Recent Sessions',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Sessions',
+                  style: GoogleFonts.lato(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AllSessionsScreen()),
+                    );
+                  },
+                  child: Text(
+                    'View All',
+                    style: GoogleFonts.lato(
+                      color: const Color(0xFF4CD964),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
+            _buildSessionItem('1', const Color(0xFF4CD964), '2024.02.01',
+                'PT Session with Jane'),
             _buildSessionItem(
-                '1', Colors.blue, '2024.02.01', 'PT Session with Jane'),
-            _buildSessionItem(
-                '2', Colors.green, '2024.01.31', 'Custom Individual Workout'),
-            _buildSessionItem(
-                '3', Colors.blue, '2024.01.30', 'PT Session with Jane'),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const AllSessionsScreen()),
-                  );
-                },
-                child: const Text('View All'),
-              ),
-            ),
+                '2', Colors.blue, '2024.01.31', 'Custom Individual Workout'),
+            _buildSessionItem('3', const Color(0xFF4CD964), '2024.01.30',
+                'PT Session with Jane'),
           ],
         ),
       ),
@@ -337,12 +366,12 @@ Widget build(BuildContext context) {
   Widget _buildSessionItem(
       String number, Color color, String date, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
@@ -351,46 +380,60 @@ Widget build(BuildContext context) {
               child: Text(
                 number,
                 style: GoogleFonts.lato(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(date,
-                    style: GoogleFonts.lato(
-                        color: Colors.grey[600], fontSize: 12)),
-                Text(title,
-                    style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+                Text(
+                  title,
+                  style: GoogleFonts.lato(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: GoogleFonts.lato(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right),
+          const Icon(Icons.chevron_right, color: Colors.grey),
         ],
       ),
     );
   }
 
   Widget _buildStartSessionButton() {
-    return AnimatedInkWell(
-      onTap: () {
-        // TODO: Implement start new session functionality
-      },
-      splashColor: Colors.white.withOpacity(0.3),
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Center(
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: AnimatedInkWell(
+        onTap: () {
+          // TODO: Implement start new session functionality
+        },
+        splashColor: Colors.white.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Text(
-            'Start new Session',
+            'Start New Session',
+            textAlign: TextAlign.center,
             style: GoogleFonts.lato(
               fontSize: 18,
               fontWeight: FontWeight.bold,

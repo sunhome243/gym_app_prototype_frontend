@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'api_services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,7 +18,8 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -42,7 +44,8 @@ class AuthService {
     }
   }
 
-  Future<UserCredential> signIn({required String email, required String password}) async {
+  Future<UserCredential> signIn(
+      {required String email, required String password}) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -59,7 +62,11 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await _apiService.removeFCMToken(token);
+    }
+    await FirebaseAuth.instance.signOut();
   }
 
   Future<String> getIdToken() async {
@@ -94,8 +101,12 @@ class AuthService {
     return {
       'uid': user.uid,
       'email': user.email ?? '',
-      'first_name': decodedToken['first_name'] as String? ?? user.displayName?.split(' ').first ?? '',
-      'last_name': decodedToken['last_name'] as String? ?? user.displayName?.split(' ').last ?? '',
+      'first_name': decodedToken['first_name'] as String? ??
+          user.displayName?.split(' ').first ??
+          '',
+      'last_name': decodedToken['last_name'] as String? ??
+          user.displayName?.split(' ').last ??
+          '',
       'role': role.toLowerCase(),
     };
   }
