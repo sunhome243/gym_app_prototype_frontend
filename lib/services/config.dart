@@ -1,7 +1,46 @@
-class Config {
-  static const String userServiceUrl = 'http://127.0.0.1:8000';
-  static const String workoutServiceUrl = 'http://127.0.0.1:8001';
-  static const String statsServiceUrl = 'http://127.0.0.1:8002';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
-  // 다른 설정들을 여기에 추가할 수 있습니다.
+class Config {
+  static String get userServiceUrl {
+    if (kReleaseMode) {
+      return 'https://your-production-api.com';  // 실제 프로덕션 API URL로 교체하세요
+    } else {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:8000';  // Android 에뮬레이터용
+      } else if (Platform.isIOS) {
+        return 'http://localhost:8000';  // iOS 시뮬레이터용
+      } else {
+        return 'http://YOUR_MACHINE_IP:8000';  // YOUR_MACHINE_IP를 실제 IP 주소로 교체하세요
+      }
+    }
+  }
+
+  static String get workoutServiceUrl {
+    if (kReleaseMode) {
+      return 'https://your-production-api.com';
+    } else {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:8001';
+      } else if (Platform.isIOS) {
+        return 'http://localhost:8001';
+      } else {
+        return 'http://YOUR_MACHINE_IP:8001';
+      }
+    }
+  }
+
+  static String get statsServiceUrl {
+    if (kReleaseMode) {
+      return 'https://your-production-api.com';
+    } else {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:8002';
+      } else if (Platform.isIOS) {
+        return 'http://localhost:8002';
+      } else {
+        return 'http://YOUR_MACHINE_IP:8002';
+      }
+    }
+  }
 }

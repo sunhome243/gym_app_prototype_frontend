@@ -68,12 +68,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // Background gradients based on user type
           if (widget.userType == 'Member')
             Positioned(
               right: -size.width * 1.5,
@@ -123,20 +122,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.topCenter,
                   child: Column(
                     children: [
                       SizedBox(height: size.height * 0.01),
                       _buildLogo(),
-                      SizedBox(height: size.height * 0.1),
                     ],
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  sliver: SliverToBoxAdapter(
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Hero(
                       tag: 'contentBox',
                       child: Material(
@@ -149,14 +149,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: size.height * 0.05),
-                ),
               ],
             ),
           ),
           Positioned(
-            top: topPadding + 16,
+            top: MediaQuery.of(context).padding.top + 16,
             left: 16,
             child: const CustomBackButton(),
           ),
@@ -199,97 +196,96 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildSignUpForm() {
-    return SingleChildScrollView(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildInputField(
-                  controller: _firstNameController,
-                  label: 'First Name',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _lastNameController,
-                  label: 'Last Name',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _emailController,
-                  label: 'Email',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                ),
-                const SizedBox(height: 24),
-                if (_errorMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      _errorMessage,
-                      style: GoogleFonts.lato(
-                        color: Colors.red,
-                      ),
-                      textAlign: TextAlign.center,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildInputField(
+                controller: _firstNameController,
+                label: 'First Name',
+                icon: Icons.person_outline,
+              ),
+              const SizedBox(height: 16),
+              _buildInputField(
+                controller: _lastNameController,
+                label: 'Last Name',
+                icon: Icons.person_outline,
+              ),
+              const SizedBox(height: 16),
+              _buildInputField(
+                controller: _emailController,
+                label: 'Email',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              _buildInputField(
+                controller: _passwordController,
+                label: 'Password',
+                icon: Icons.lock_outline,
+                isPassword: true,
+              ),
+              const SizedBox(height: 24),
+              if (_errorMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _errorMessage,
+                    style: GoogleFonts.lato(
+                      color: Colors.red,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signUp,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      backgroundColor: widget.userType == 'Trainer'
-                          ? const Color(0xFF007AFF)
-                          : const Color(0xFF4CD964),
+                ),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _signUp,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Sign Up',
-                            style: GoogleFonts.lato(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.white,
-                            ),
+                    backgroundColor: widget.userType == 'Trainer'
+                        ? const Color(0xFF007AFF)
+                        : const Color(0xFF4CD964),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
                           ),
-                  ),
+                        )
+                      : Text(
+                          'Sign Up',
+                          style: GoogleFonts.lato(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -343,8 +339,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             width: 2,
           ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       style: GoogleFonts.lato(),
       validator: (value) {

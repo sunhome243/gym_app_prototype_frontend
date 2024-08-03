@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
+import '../widgets/quick_action_button.dart'; // Import the new widget
 import 'all_sessions_screen.dart';
 import 'member_profile_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
@@ -20,7 +21,6 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   int _selectedIndex = 1;
   Map<String, dynamic>? _userInfo;
   bool _isLoading = true;
-  String _errorMessage = '';
 
   @override
   void initState() {
@@ -31,7 +31,6 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   Future<void> _fetchUserInfo() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
     try {
@@ -43,7 +42,6 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error fetching user info: $e';
         _isLoading = false;
       });
     }
@@ -211,50 +209,39 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildQuickActionButton(Icons.fitness_center, 'Workouts', () {}),
-        _buildQuickActionButton(Icons.insights, 'Progress', () {}),
-        _buildQuickActionButton(Icons.person, 'Trainer', () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const ManageTrainerScreen()),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildQuickActionButton(
-      IconData icon, String label, VoidCallback onTap) {
-    return AnimatedInkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+        QuickActionButton(
+          icon: Icons.fitness_center,
+          label: 'Workouts',
+          iconColor: const Color(0xFF4CD964),
+          onTap: () {
+            // TODO: Add functionality for Workouts
+          },
+        ),
+        QuickActionButton(
+          icon: Icons.insights,
+          label: 'Progress',
+          iconColor: const Color(0xFF4CD964),
+          onTap: () {
+            // TODO: Add functionality for Progress
+          },
+        ),
+        Hero(
+          tag: 'trainerButton',
+          child: QuickActionButton(
+            icon: Icons.person,
+            label: 'Trainer',
+            iconColor: const Color(0xFF4CD964),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageTrainerScreen(),
                 ),
-              ],
-            ),
-            child: Icon(icon, size: 30, color: const Color(0xFF4CD964)),
+              );
+            },
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.lato(
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

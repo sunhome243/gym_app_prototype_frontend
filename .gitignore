@@ -41,6 +41,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build
 lib/firebase_options.dart
 functions/package-lock.json
 node_modules

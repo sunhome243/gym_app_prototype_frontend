@@ -5,12 +5,11 @@ import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/background.dart';
-import '../services/schemas.dart';
 import '../widgets/animated_inkwell.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ManageTrainerScreen extends StatefulWidget {
-  const ManageTrainerScreen({Key? key}) : super(key: key);
+  const ManageTrainerScreen({super.key});
 
   @override
   _ManageTrainerScreenState createState() => _ManageTrainerScreenState();

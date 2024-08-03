@@ -69,7 +69,7 @@ class SelectUserTypeScreen extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      SizedBox(height: size.height * 0.15),
+                      SizedBox(height: size.height * 0.2),
                       Expanded(
                         child: SingleChildScrollView(
                           child: Padding(
@@ -105,7 +105,6 @@ class SelectUserTypeScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildLogo() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -124,16 +123,6 @@ class SelectUserTypeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Choose Your Fitness Path',
-          style: GoogleFonts.lato(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
-          textAlign: TextAlign.center,
         ),
       ],
     );

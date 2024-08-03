@@ -7,11 +7,11 @@ class SkeletonContainer extends StatelessWidget {
   final BorderRadius borderRadius;
 
   const SkeletonContainer({
-    Key? key,
+    super.key,
     this.width = double.infinity,
     required this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(0)),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +31,10 @@ class SkeletonText extends StatelessWidget {
   final double height;
 
   const SkeletonText({
-    Key? key,
+    super.key,
     this.width = double.infinity,
     this.height = 16,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class SkeletonText extends StatelessWidget {
 class SkeletonCard extends StatelessWidget {
   final double height;
 
-  const SkeletonCard({Key? key, this.height = 200}) : super(key: key);
+  const SkeletonCard({super.key, this.height = 200});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class SkeletonCard extends StatelessWidget {
 class SkeletonAvatar extends StatelessWidget {
   final double size;
 
-  const SkeletonAvatar({Key? key, this.size = 50}) : super(key: key);
+  const SkeletonAvatar({super.key, this.size = 50});
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +75,7 @@ class SkeletonAvatar extends StatelessWidget {
 }
 
 class SkeletonListTile extends StatelessWidget {
-  const SkeletonListTile({Key? key}) : super(key: key);
+  const SkeletonListTile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +105,7 @@ class SkeletonListTile extends StatelessWidget {
 class ShimmerLoading extends StatelessWidget {
   final Widget child;
 
-  const ShimmerLoading({Key? key, required this.child}) : super(key: key);
+  const ShimmerLoading({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

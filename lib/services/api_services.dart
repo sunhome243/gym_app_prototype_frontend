@@ -203,8 +203,8 @@ class ApiService {
     return response['remaining_sessions'] as int;
   }
 
-  Future<void> removeTrainerMemberMapping(String otherEmail) async {
-    await _request('user', 'trainer-member-mapping/$otherEmail', 'DELETE');
+  Future<void> removeTrainerMemberMapping(String otherUid) async {
+    await _request('user', 'trainer-member-mapping/$otherUid', 'DELETE');
   }
 
   Future<void> requestMoreSessions(String trainerUid, int additionalSessions) async {
@@ -240,5 +240,5 @@ Future<void> addFCMToken(String token) async {
 Future<void> removeFCMToken(String token) async {
   await _request('user', 'remove-fcm-token', 'POST', body: {'token': token});
 }
-  
+
 }

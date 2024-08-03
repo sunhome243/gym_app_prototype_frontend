@@ -156,7 +156,7 @@ String _getErrorMessage(FirebaseAuthException e) {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(height: size.height * 0.05), // 로고와 컨텐츠 박스 사이 간격 조정
+                          SizedBox(height: size.height * 0.00), // 로고와 컨텐츠 박스 사이 간격 조정
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24.0),
                             child: Hero(
@@ -172,7 +172,7 @@ String _getErrorMessage(FirebaseAuthException e) {
                           ),
                           const SizedBox(height: 9),
                           _buildSignUpButton(),
-                          SizedBox(height: size.height * 0.1), // 하단 여백 추가
+                          SizedBox(height: size.height * 0.05), // 하단 여백 추가
                         ],
                       ),
                     ),
@@ -187,19 +187,25 @@ String _getErrorMessage(FirebaseAuthException e) {
   }
 
   Widget _buildLogo() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10), // 로고 하단 패딩 감소
-      child: Hero(
-        tag: 'logo',
-        child: Text(
-          'FitSync',
-          style: GoogleFonts.pacifico(
-            fontSize: 48,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF333333),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Hero(
+          tag: 'logo',
+          child: Material(
+            color: Colors.transparent,
+            child: Text(
+              'FitSync',
+              style: GoogleFonts.pacifico(
+                fontSize: 48,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 

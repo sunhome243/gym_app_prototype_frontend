@@ -27,7 +27,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
   bool _isExpanded = false;
   String _errorMessage = '';
   late AnimationController _animationController;
-  late Animation<double> _animation;
   late AnimationController _expandController;
   late Animation<double> _expandAnimation;
 
@@ -46,10 +45,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
     );
     _expandController = AnimationController(
       vsync: this,
@@ -106,7 +101,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen>
 @override
 Widget build(BuildContext context) {
   final screenHeight = MediaQuery.of(context).size.height;
-  final gradientHeight = screenHeight / 3;
   
   return Scaffold(
     body: Stack(
@@ -667,7 +661,7 @@ Widget build(BuildContext context) {
   Future<void> _removeMember(dynamic member) async {
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
-      await apiService.removeTrainerMemberMapping(member['member_email']);
+      await apiService.removeTrainerMemberMapping(member['uid']);
       await _fetchMembers();
       _showSuccessDialog(context, 'Member removed successfully');
     } catch (e) {
