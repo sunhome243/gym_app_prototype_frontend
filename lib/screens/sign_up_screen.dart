@@ -264,7 +264,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     backgroundColor: widget.userType == 'Trainer'
                         ? const Color(0xFF007AFF)
-                        : const Color(0xFF4CD964),
+                        : const Color(0xFF3CD687),
                   ),
                   child: _isLoading
                       ? const SizedBox(

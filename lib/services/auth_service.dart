@@ -61,13 +61,22 @@ class AuthService {
     }
   }
 
-  Future<void> signOut() async {
+Future<void> signOut() async {
+  try {
     String? token = await FirebaseMessaging.instance.getToken();
     if (token != null) {
-      await _apiService.removeFCMToken(token);
+      await _apiService.removeFCMToken(token).catchError((e) {
+        print('Error removing FCM token: $e');
+        // Continue with sign out even if FCM token removal fails
+      });
     }
-    await FirebaseAuth.instance.signOut();
+  } catch (e) {
+    print('Error getting FCM token: $e');
+    // Continue with sign out even if there's an error with FCM
   }
+  
+  await FirebaseAuth.instance.signOut();
+}
 
   Future<String> getIdToken() async {
     return await _auth.currentUser?.getIdToken() ?? '';
@@ -110,4 +119,23 @@ class AuthService {
       'role': role.toLowerCase(),
     };
   }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      final cred = EmailAuthProvider.credential(
+        email: user!.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(newPassword);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error changing password: $e');
+      }
+      rethrow;
+    }
+  }
+
 }

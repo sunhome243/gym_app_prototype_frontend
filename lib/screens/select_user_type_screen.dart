@@ -28,7 +28,7 @@ class SelectUserTypeScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF4CD964),
+                        const Color(0xFF3CD687),
                         Colors.white.withOpacity(0)
                       ],
                       stops: const [0.0, 0.7],

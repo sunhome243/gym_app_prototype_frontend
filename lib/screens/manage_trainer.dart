@@ -54,7 +54,7 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
         children: [
           Background(
             height: MediaQuery.of(context).size.height,
-            colors: const [Color(0xFF4CD964), Colors.white],
+            colors: const [Color(0xFF3CD687), Colors.white],
             stops: const [0.0, 0.3],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,

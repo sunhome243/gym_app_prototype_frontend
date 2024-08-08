@@ -85,7 +85,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF4CD964), Colors.white],
+            colors: [Color(0xFF3CD687), Colors.white],
             stops: [0.0, 0.5],
           ),
         ),

@@ -35,7 +35,6 @@ void main() async {
     runApp(MyApp(apiService: apiService, authService: authService));
   } catch (e) {
     print("Error during initialization: $e");
-    // 여기에 사용자에게 오류를 표시하는 로직을 추가할 수 있습니다.
   }
 }
 
@@ -79,7 +78,6 @@ Future<void> setupFCM(ApiService apiService) async {
 
         if (message.notification != null) {
           print('Message also contained a notification: ${message.notification}');
-          // 여기에 로컬 알림 표시 로직 추가
         }
       });
     } else {
@@ -94,7 +92,7 @@ class MyApp extends StatelessWidget {
   final ApiService apiService;
   final AuthService authService;
 
-  const MyApp({Key? key, required this.apiService, required this.authService}) : super(key: key);
+  const MyApp({super.key, required this.apiService, required this.authService});
 
   @override
   Widget build(BuildContext context) {
@@ -109,9 +107,8 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        initialRoute: '/',
+        home: const AuthWrapper(),
         routes: {
-          '/': (context) => const LoginScreen(),
           '/select_user_type': (context) => const SelectUserTypeScreen(),
           '/home': (context) => const MemberHomeScreen(),
         },
@@ -126,6 +123,28 @@ class MyApp extends StatelessWidget {
           return null;
         },
       ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Provider.of<AuthService>(context);
+
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasData) {
+          return const MemberHomeScreen(); // Show home screen if user is logged in
+        }
+        return const LoginScreen(); // Show login screen if user is not logged in
+      },
     );
   }
 }

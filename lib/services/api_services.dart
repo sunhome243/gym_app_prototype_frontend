@@ -103,6 +103,10 @@ class ApiService {
     }
   }
 
+
+
+
+
   Future<void> createUser(Map<String, dynamic> userData) async {
     await _request('user', 'users', 'POST', body: userData);
   }
@@ -240,5 +244,9 @@ Future<void> addFCMToken(String token) async {
 Future<void> removeFCMToken(String token) async {
   await _request('user', 'remove-fcm-token', 'POST', body: {'token': token});
 }
+
+  Future<void> updateMember(Map<String, dynamic> memberData) async {
+    await _request('user', 'members/me', 'PATCH', body: memberData);
+  }
 
 }
