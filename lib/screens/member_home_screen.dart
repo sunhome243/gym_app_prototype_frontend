@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/quick_action_button.dart'; // Import the new widget
+import '../widgets/quick_action_button.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/background.dart';
+import '../widgets/custom_card.dart';
 import 'all_sessions_screen.dart';
 import 'member_profile_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
@@ -52,16 +54,16 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          _buildBackground(),
+          Background(
+            height: MediaQuery.of(context).size.height,
+            colors: const [Color(0xFF3CD687), Colors.white],
+            stops: const [0.0, 0.3],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            heroTag: 'background_top',
+          ),
           SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: _isLoading ? _buildSkeletonUI() : _buildContent(),
-                ),
-                _buildStartSessionButton(),
-              ],
-            ),
+            child: _isLoading ? _buildSkeletonUI() : _buildContent(),
           ),
         ],
       ),
@@ -77,30 +79,14 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     );
   }
 
-  Widget _buildBackground() {
-    return Hero(
-      tag: 'background_top',
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF3CD687), Colors.white],
-            stops: [0.0, 0.5],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSkeletonUI() {
     return const ShimmerLoading(
       child: Column(
         children: [
           SkeletonCard(),
-          SizedBox(height: 20),
+          SizedBox(height: 16),
           SkeletonCard(),
-          SizedBox(height: 20),
+          SizedBox(height: 16),
           SkeletonCard(),
         ],
       ),
@@ -109,17 +95,17 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
 
   Widget _buildContent() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildQuickActions(),
-          const SizedBox(height: 24),
-          _buildWorkoutSummary(),
-          const SizedBox(height: 24),
-          _buildRecentSessionsCard(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _buildMainContent(),
+          ),
         ],
       ),
     );
@@ -128,56 +114,33 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   Widget _buildHeader() {
     final firstName = _userInfo?['first_name'] ?? 'Member';
     final greeting = _getGreeting();
-    final motivationalPhrase = _getMotivationalPhrase();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$greeting, $firstName!',
-                    style: GoogleFonts.lato(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    motivationalPhrase,
-                    style: GoogleFonts.lato(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AnimatedInkWell(
-              onTap: () {
-                // TODO: Implement notification functionality
-              },
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withOpacity(0.1),
-                ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: Colors.black,
-                  size: 28,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          greeting,
+          style: GoogleFonts.lato(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          firstName,
+          style: GoogleFonts.lato(
+            fontSize: 22,
+            fontWeight: FontWeight.w500,
+            color: Colors.black.withOpacity(0.8),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _getMotivationalPhrase(),
+          style: GoogleFonts.lato(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black.withOpacity(0.6),
+          ),
         ),
       ],
     );
@@ -186,21 +149,21 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return "Good morning";
+      return "Good morning,";
     } else if (hour < 17) {
-      return "Good afternoon";
+      return "Good afternoon,";
     } else {
-      return "Good evening";
+      return "Good evening,";
     }
   }
 
   String _getMotivationalPhrase() {
     final phrases = [
-      "Let's crush your goals!",
-      "Time to level up!",
-      "Your strength awaits!",
-      "Progress starts now!",
-      "Embrace the challenge!",
+      "Let's crush your goals today!",
+      "Time to level up your fitness!",
+      "Your strength journey continues!",
+      "Progress starts with your next move!",
+      "Embrace the challenge ahead!",
     ];
     return phrases[DateTime.now().microsecond % phrases.length];
   }
@@ -225,73 +188,77 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
             // TODO: Add functionality for Progress
           },
         ),
-        Hero(
-          tag: 'trainerButton',
-          child: QuickActionButton(
-            icon: Icons.person,
-            label: 'Trainer',
-            iconColor: const Color(0xFF4CD964),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ManageTrainerScreen(),
-                ),
-              );
-            },
-          ),
+        QuickActionButton(
+          icon: Icons.person,
+          label: 'Trainer',
+          iconColor: const Color(0xFF4CD964),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ManageTrainerScreen(),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildWorkoutSummary() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This Week\'s Progress',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildProgressItem('Workouts', '4/5'),
-                _buildProgressItem('Calories', '1,200'),
-                _buildProgressItem('Time', '3h 45m'),
-              ],
-            ),
-          ],
+  Widget _buildMainContent() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 5,
+          child: _buildWorkoutSummaryCard(),
         ),
-      ),
+        const SizedBox(height: 8), // Reduced space between cards
+        Expanded(
+          flex: 6,
+          child: _buildRecentSessionsCard(),
+        ),
+        const SizedBox(height: 16),
+        _buildStartSessionButton(),
+      ],
     );
   }
 
-  Widget _buildProgressItem(String label, String value) {
-    return Column(
+  Widget _buildWorkoutSummaryCard() {
+    return CustomCard(
+      title: "This Week's Progress",
+      titleColor: Colors.black,
+      titleFontSize: 18,
       children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildProgressItem('Workouts', '4/5', Icons.fitness_center),
+            _buildProgressItem('Calories', '1,200', Icons.local_fire_department),
+            _buildProgressItem('Time', '3h 45m', Icons.timer),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressItem(String label, String value, IconData icon) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: const Color(0xFF4CD964), size: 24),
+        const SizedBox(height: 6),
         Text(
           value,
           style: GoogleFonts.lato(
-            fontSize: 24,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF4CD964),
+            color: Colors.black,
           ),
         ),
         Text(
           label,
           style: GoogleFonts.lato(
-            fontSize: 14,
+            fontSize: 12,
             color: Colors.grey[600],
           ),
         ),
@@ -300,135 +267,68 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   }
 
   Widget _buildRecentSessionsCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Sessions',
-                  style: GoogleFonts.lato(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AllSessionsScreen()),
-                    );
-                  },
-                  child: Text(
-                    'View All',
-                    style: GoogleFonts.lato(
-                      color: const Color(0xFF4CD964),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSessionItem('1', const Color(0xFF4CD964), '2024.02.01',
-                'PT Session with Jane'),
-            _buildSessionItem(
-                '2', Colors.blue, '2024.01.31', 'Custom Individual Workout'),
-            _buildSessionItem('3', const Color(0xFF4CD964), '2024.01.30',
-                'PT Session with Jane'),
-          ],
+    return CustomCard(
+      title: 'Recent Sessions',
+      titleColor: Colors.black,
+      titleFontSize: 18,
+      trailing: TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+          );
+        },
+        child: Text(
+          'View All',
+          style: GoogleFonts.lato(
+            color: const Color(0xFF4CD964),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSessionItem(
-      String number, Color color, String date, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: GoogleFonts.lato(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+      children: [
+        Expanded(
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(
+                  Icons.fitness_center,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  title,
+                  'No recent sessions',
                   style: GoogleFonts.lato(
-                    fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 8),
                 Text(
-                  date,
+                  'Start a new session to see it here',
                   style: GoogleFonts.lato(
-                    color: Colors.grey[600],
                     fontSize: 14,
+                    color: Colors.grey[500],
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildStartSessionButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: AnimatedInkWell(
-        onTap: () {
-          // TODO: Implement start new session functionality
-        },
-        splashColor: Colors.white.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            'Start New Session',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.lato(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
+    return CustomUpdateButton(
+      onPressed: () {
+        // TODO: Implement start new session functionality
+      },
+      text: 'Start New Session',
+      backgroundColor: const Color(0xFF4CD964),
     );
   }
 

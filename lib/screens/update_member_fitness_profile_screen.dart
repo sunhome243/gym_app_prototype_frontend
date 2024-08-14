@@ -4,14 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/background.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 import '../widgets/custom_modal.dart';
+import '../widgets/custom_dropdown.dart';
 
 class UpdateMemberFitnessProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? userInfo;
 
-  const UpdateMemberFitnessProfileScreen({Key? key, required this.userInfo}) : super(key: key);
+  const UpdateMemberFitnessProfileScreen({super.key, required this.userInfo});
 
   @override
   _UpdateMemberFitnessProfileScreenState createState() => _UpdateMemberFitnessProfileScreenState();
@@ -22,18 +23,6 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
   late int _workoutLevel;
   late int _workoutFrequency;
   late int _workoutGoal;
-
-  final Map<int, String> _workoutGoals = {
-    1: 'Weight Loss',
-    2: 'Muscle Building',
-    3: 'Endurance Improvement'
-  };
-
-  final Map<int, String> _workoutLevels = {
-    1: 'Beginner',
-    2: 'Intermediate',
-    3: 'Advanced'
-  };
 
   @override
   void initState() {
@@ -59,23 +48,40 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
           SafeArea(
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: const CustomBackButton(),
-                    title: Text(
-                      'Update Fitness Profile',
-                      style: GoogleFonts.lato(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 3, 16, 0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        Text(
+                          'Update Fitness Profile',
+                          style: GoogleFonts.lato(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: _buildForm(),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildFitnessProfileCard(),
+                          const SizedBox(height: 20),
+                          _buildUpdateButton(),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -86,181 +92,146 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
     );
   }
 
-  Widget _buildForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFitnessProfileCard(),
-          const SizedBox(height: 24),
-          _buildUpdateButton(),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFitnessProfileCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Fitness Profile',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildHeroDropdown(
-              'Workout Goal',
-              _workoutGoal,
-              (value) {
-                if (value != null) {
-                  setState(() => _workoutGoal = value);
-                }
-              },
-              _workoutGoals,
-              'Choose your primary fitness goal',
-            ),
-            _buildHeroDropdown(
-              'Workout Level',
-              _workoutLevel,
-              (value) {
-                if (value != null) {
-                  setState(() => _workoutLevel = value);
-                }
-              },
-              _workoutLevels,
-              'Select based on your current fitness level and experience',
-            ),
-            _buildWorkoutFrequencySlider(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroDropdown(String label, int value, Function(int?) onChanged, Map<int, String> items, String helperText) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(helperText, style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 8),
-          Hero(
-            tag: label,
-            child: Material(
-              color: Colors.transparent,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: value,
-                    isExpanded: true,
-                    icon: const Icon(Icons.arrow_drop_down),
-                    iconSize: 24,
-                    elevation: 16,
-                    style: GoogleFonts.lato(color: Colors.black),
-                    onChanged: onChanged,
-                    items: items.entries.map<DropdownMenuItem<int>>((entry) {
-                      return DropdownMenuItem<int>(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkoutFrequencySlider() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return CustomCard(
+      title: 'Fitness Profile',
+      titleColor: Colors.black,
+      titleFontSize: 22,
       children: [
-        Text('Workout Frequency', style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text('How many times per week do you plan to work out?', style: GoogleFonts.lato(fontSize: 12, color: Colors.grey[600])),
-        const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            activeTrackColor: Colors.green[700],
-            inactiveTrackColor: Colors.green[100],
-            trackShape: const RoundedRectSliderTrackShape(),
-            trackHeight: 4.0,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12.0),
-            thumbColor: Colors.greenAccent,
-            overlayColor: Colors.green.withAlpha(50),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 28.0),
-            tickMarkShape: const RoundSliderTickMarkShape(),
-            activeTickMarkColor: Colors.green[700],
-            inactiveTickMarkColor: Colors.green[100],
-            valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
-            valueIndicatorColor: Colors.greenAccent,
-            valueIndicatorTextStyle: const TextStyle(
-              color: Colors.black,
-            ),
-          ),
-          child: Slider(
-            value: _workoutFrequency.toDouble(),
-            min: 1,
-            max: 7,
-            divisions: 6,
-            label: _workoutFrequency.toString(),
-            onChanged: (value) {
-              setState(() {
-                _workoutFrequency = value.round();
-              });
-            },
-          ),
+        CustomDropdown(
+          label: 'Workout Goal',
+          value: _workoutGoal,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _workoutGoal = value);
+            }
+          },
+          items: const {
+            1: {'label': 'Weight Loss', 'icon': Icons.trending_down},
+            2: {'label': 'Muscle Building', 'icon': Icons.fitness_center},
+            3: {'label': 'Endurance Improvement', 'icon': Icons.timer},
+          },
+          helperText: 'Choose your primary fitness goal',
         ),
-        Text('$_workoutFrequency times per week', style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.bold)),
+        CustomDropdown(
+          label: 'Workout Level',
+          value: _workoutLevel,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _workoutLevel = value);
+            }
+          },
+          items: const {
+            1: {'label': 'Beginner', 'icon': Icons.accessibility_new},
+            2: {'label': 'Intermediate', 'icon': Icons.directions_run},
+            3: {'label': 'Advanced', 'icon': Icons.whatshot},
+          },
+          helperText: 'Select based on your current fitness level and experience',
+        ),
+        _buildWorkoutFrequencySelector(),
       ],
     );
   }
 
-  Widget _buildUpdateButton() {
-    return AnimatedInkWell(
-      onTap: _updateFitnessProfile,
-      splashColor: const Color(0xFF3CD687).withOpacity(0.3),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF3CD687),
-          borderRadius: BorderRadius.circular(12),
+Widget _buildWorkoutFrequencySelector() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Workout Frequency',
+        style: GoogleFonts.lato(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[800],
         ),
-        child: Center(
-          child: Text(
-            'Update Fitness Profile',
-            style: GoogleFonts.lato(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: Colors.white,
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'How many times per week do you plan to work out?',
+        style: GoogleFonts.lato(fontSize: 14, color: Colors.grey[600]),
+      ),
+      const SizedBox(height: 24),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(7, (index) {
+          final day = index + 1;
+          final isSelected = _workoutFrequency == day;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _workoutFrequency = day;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF3CD687) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF3CD687) : Colors.grey[300]!,
+                  width: 2,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF3CD687).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Center(
+                child: Text(
+                  '$day',
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : Colors.grey[600],
+                  ),
+                ),
+              ),
             ),
+          );
+        }),
+      ),
+      const SizedBox(height: 24),
+      Center(
+        child: RichText(
+          text: TextSpan(
+            style: GoogleFonts.lato(
+              fontSize: 18,
+              color: Colors.grey[800],
+            ),
+            children: [
+              TextSpan(
+                text: '$_workoutFrequency ',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3CD687),
+                ),
+              ),
+              TextSpan(
+                text: _workoutFrequency == 1 ? 'day' : 'days',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: ' per week'),
+            ],
           ),
         ),
       ),
+    ],
+  );
+}
+
+  Widget _buildUpdateButton() {
+    return CustomUpdateButton(
+      onPressed: _updateFitnessProfile,
+      text: 'Update Fitness Profile',
+      backgroundColor: const Color(0xFF3CD687),
+      textColor: Colors.white,
     );
   }
 
@@ -273,9 +244,11 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
           'workout_frequency': _workoutFrequency,
           'workout_goal': _workoutGoal,
         });
-        
+
+        if (!mounted) return;
         _showSuccessDialog('Fitness profile updated successfully');
       } catch (e) {
+        if (!mounted) return;
         _showErrorDialog('Failed to update fitness profile', _getErrorMessage(e));
       }
     }
@@ -303,7 +276,10 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
         CustomModalAction(
           text: 'OK',
           isDefaultAction: true,
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+            Navigator.of(context).pop(); // Return to the previous screen
+          },
         ),
       ],
     );

@@ -9,6 +9,7 @@ import '../widgets/animated_inkwell.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/profile_header.dart';
+import '../widgets/custom_card.dart';
 import 'update_member_personal_info_screen.dart';
 import 'update_member_fitness_profile_screen.dart';
 import 'member_home_screen.dart';
@@ -110,7 +111,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            padding: const EdgeInsets.fromLTRB(24, 3, 24, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -161,59 +162,49 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   }
 
   Widget _buildFitnessProfileCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Fitness Profile',
-                  style: GoogleFonts.lato(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.black),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => UpdateMemberFitnessProfileScreen(
-                          userInfo: _userInfo,
-                        ),
-                      ),
-                    ).then((_) => _refreshProfile());
-                  },
-                ),
-              ],
+    return CustomCard(
+      title: 'Fitness Profile',
+      titleColor: Colors.black,
+      titleFontSize: 22,
+      trailing: IconButton(
+        icon: const Icon(Icons.edit, color: Colors.black),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UpdateMemberFitnessProfileScreen(
+                userInfo: _userInfo,
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildInfoItem(Icons.fitness_center, 'Workout Level',
-                _getWorkoutLevel(_userInfo?['workout_level'])),
-            _buildInfoItem(Icons.repeat, 'Workout Frequency',
-                _getWorkoutFrequency(_userInfo?['workout_frequency'])),
-            _buildInfoItem(Icons.emoji_events, 'Workout Goal',
-                _getWorkoutGoal(_userInfo?['workout_goal'])),
-          ],
-        ),
+          ).then((_) => _refreshProfile());
+        },
       ),
+      children: [
+        _buildInfoItem(
+          Icons.emoji_events,
+          'Workout Goal',
+          _getWorkoutGoal(_userInfo?['workout_goal']),
+        ),
+        _buildInfoItem(
+          Icons.fitness_center,
+          'Workout Level',
+          _getWorkoutLevel(_userInfo?['workout_level']),
+        ),
+        _buildInfoItem(
+          Icons.repeat,
+          'Workout Frequency',
+          _getWorkoutFrequency(_userInfo?['workout_frequency']),
+        ),
+      ],
     );
   }
 
   Widget _buildInfoItem(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF4CD964), size: 24),
+          Icon(icon, color: const Color(0xFF3CD687), size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -222,16 +213,17 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 Text(
                   label,
                   style: GoogleFonts.lato(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    fontSize: 14,
+                    color: Colors.grey[600],
                   ),
                 ),
               ],

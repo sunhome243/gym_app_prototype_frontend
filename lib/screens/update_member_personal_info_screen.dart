@@ -4,11 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../services/auth_service.dart';
-import '../widgets/background.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
+import '../widgets/custom_card.dart';
+import '../widgets/custom_text_form_field.dart';
 import '../widgets/custom_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/background.dart'; 
+import '../widgets/custom_button.dart';
 
 class UpdateMemberPersonalInfoScreen extends StatefulWidget {
   final Map<String, dynamic>? userInfo;
@@ -79,23 +80,42 @@ class _UpdateMemberPersonalInfoScreenState extends State<UpdateMemberPersonalInf
           SafeArea(
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: const CustomBackButton(),
-                    title: Text(
-                      'Update Personal Info',
-                      style: GoogleFonts.lato(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        Text(
+                          'Update Personal Info',
+                          style: GoogleFonts.lato(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: _buildForm(),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPersonalInfoSection(),
+                          const SizedBox(height: 5),
+                          _buildPasswordSection(),
+                          const SizedBox(height: 5),
+                          _buildUpdateButton(),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -106,183 +126,142 @@ class _UpdateMemberPersonalInfoScreenState extends State<UpdateMemberPersonalInf
     );
   }
 
-  Widget _buildForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildPersonalInfoCard(),
-          const SizedBox(height: 24),
-          _buildPasswordChangeCard(),
-          const SizedBox(height: 24),
-          _buildUpdateButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfoCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    Widget _buildPersonalInfoSection() {
+    return CustomCard(
+      title: 'Personal Information',
+      titleColor: Colors.black,
+      titleFontSize: 22,
+      children: [
+        CustomTextFormField(
+          label: 'First Name',
+          controller: _firstNameController,
+          icon: Icons.person,
+        ),
+        CustomTextFormField(
+          label: 'Last Name',
+          controller: _lastNameController,
+          icon: Icons.person,
+        ),
+        CustomTextFormField(
+          label: 'Age',
+          controller: _ageController,
+          icon: Icons.cake,
+          keyboardType: TextInputType.number,
+        ),
+        Row(
           children: [
-            Text(
-              'Personal Information',
-              style: GoogleFonts.lato(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+            Expanded(
+              child: CustomTextFormField(
+                label: 'Height (${_useMetric ? 'cm' : 'in'})',
+                controller: _heightController,
+                icon: Icons.height,
+                keyboardType: TextInputType.number,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildTextFormField('First Name', _firstNameController),
-            _buildTextFormField('Last Name', _lastNameController),
-            _buildTextFormField('Age', _ageController, keyboardType: TextInputType.number),
-            _buildMeasurementField('Height', _heightController, _useMetric ? 'cm' : 'in'),
-            _buildMeasurementField('Weight', _weightController, _useMetric ? 'kg' : 'lbs'),
-            _buildUnitToggle(),
+            const SizedBox(width: 10),
+            Expanded(
+              child: CustomTextFormField(
+                label: 'Weight (${_useMetric ? 'kg' : 'lbs'})',
+                controller: _weightController,
+                icon: Icons.fitness_center,
+                keyboardType: TextInputType.number,
+              ),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        _buildUnitToggle(),
+      ],
     );
   }
 
   Widget _buildUnitToggle() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Unit System', style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.bold)),
-          CupertinoSlidingSegmentedControl<bool>(
-            groupValue: _useMetric,
-            children: const {
-              true: Text('Metric'),
-              false: Text('Imperial'),
-            },
-            onValueChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _useMetric = value;
-                  _convertUnits();
-                });
-              }
-            },
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Unit System',
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[700],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPasswordChangeCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Change Password',
-              style: GoogleFonts.lato(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildTextFormField('Current Password', _currentPasswordController, isPassword: true),
-            _buildTextFormField('New Password', _newPasswordController, isPassword: true),
-            _buildTextFormField('Confirm New Password', _confirmPasswordController, isPassword: true),
-          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextFormField(String label, TextEditingController controller, {TextInputType? keyboardType, bool isPassword = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          CupertinoTextField(
-            controller: controller,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            placeholder: label,
-            keyboardType: keyboardType,
-            obscureText: isPassword,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMeasurementField(String label, TextEditingController controller, String unit) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: CupertinoTextField(
-                  controller: controller,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  placeholder: label,
-                  keyboardType: TextInputType.number,
+        CupertinoSlidingSegmentedControl<bool>(
+          groupValue: _useMetric,
+          backgroundColor: Colors.grey[200]!,
+          thumbColor: const Color(0xFF3CD687),
+          children: {
+            true: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Metric',
+                style: GoogleFonts.lato(
+                  color: _useMetric ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(unit, style: GoogleFonts.lato(fontSize: 16)),
-            ],
-          ),
-        ],
-      ),
+            ),
+            false: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Imperial',
+                style: GoogleFonts.lato(
+                  color: !_useMetric ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          },
+          onValueChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _useMetric = value;
+                _convertUnits();
+              });
+            }
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildUpdateButton() {
-    return AnimatedInkWell(
-      onTap: _updateProfile,
-      splashColor: const Color(0xFF3CD687).withOpacity(0.3),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF3CD687),
-          borderRadius: BorderRadius.circular(12),
+  Widget _buildPasswordSection() {
+    return CustomCard(
+      title: 'Change Password',
+      titleColor: const Color.fromARGB(255, 0, 0, 0),
+      titleFontSize: 22,
+      children: [
+        CustomTextFormField(
+          label: 'Current Password',
+          controller: _currentPasswordController,
+          icon: Icons.lock,
+          isPassword: true,
         ),
-        child: Center(
-          child: Text(
-            'Update Profile',
-            style: GoogleFonts.lato(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: Colors.white,
-            ),
-          ),
+        CustomTextFormField(
+          label: 'New Password',
+          controller: _newPasswordController,
+          icon: Icons.lock_open,
+          isPassword: true,
         ),
-      ),
+        CustomTextFormField(
+          label: 'Confirm New Password',
+          controller: _confirmPasswordController,
+          icon: Icons.lock_outline,
+          isPassword: true,
+        ),
+      ],
     );
   }
+
+ Widget _buildUpdateButton() {
+  return CustomUpdateButton(
+    onPressed: _updateProfile,
+    text: 'Update Profile',
+    backgroundColor: const Color(0xFF3CD687),
+    textColor: Colors.white,
+  );
+}
 
   void _updateProfile() async {
     if (_formKey.currentState!.validate()) {
@@ -290,7 +269,6 @@ class _UpdateMemberPersonalInfoScreenState extends State<UpdateMemberPersonalInf
       final authService = Provider.of<AuthService>(context, listen: false);
       await _savePreferredUnit(_useMetric);
       try {
-        // Validate input fields
         _validateInputFields();
 
         await apiService.updateMember({

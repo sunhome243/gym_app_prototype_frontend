@@ -264,7 +264,7 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> with TickerPr
             left: -10,
             child: Icon(
               widget.backgroundIcon2,
-              size: 100,
+              size: 80,
               color: Colors.white.withOpacity(0.1),
             ),
           ),
