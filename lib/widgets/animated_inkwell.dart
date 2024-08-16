@@ -20,7 +20,7 @@ class AnimatedInkWell extends StatefulWidget {
     this.splashColor,
     this.highlightColor,
     this.borderRadius,
-    this.tapDuration = const Duration(milliseconds: 10),
+    this.tapDuration = const Duration(milliseconds: 1),
     this.longPressDuration = const Duration(milliseconds: 100),
     this.enableFeedback = true,
   });
@@ -44,12 +44,12 @@ class _AnimatedInkWellState extends State<AnimatedInkWell> with SingleTickerProv
     );
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.90)
+        tween: Tween<double>(begin: 1.0, end: 0.9)
             .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 30.0,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.90, end: 0.70)
+        tween: Tween<double>(begin: 0.90, end: 0.85)
             .chain(CurveTween(curve: Curves.easeInOutCubic)),
         weight: 70.0,
       ),

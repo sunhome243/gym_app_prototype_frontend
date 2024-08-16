@@ -8,6 +8,8 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_card.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/custom_dropdown.dart';
+import '../widgets/custom_back_button.dart';
+
 
 class UpdateMemberFitnessProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? userInfo;
@@ -32,43 +34,41 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
     _workoutGoal = widget.userInfo?['workout_goal'] ?? 1;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Background(
-            height: MediaQuery.of(context).size.height,
-            colors: const [Color(0xFF3CD687), Colors.white],
-            stops: const [0.0, 0.3],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            heroTag: 'background_top',
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 3, 16, 0),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.black),
-                          onPressed: () => Navigator.of(context).pop(),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Stack(
+      children: [
+        Background(
+          height: MediaQuery.of(context).size.height,
+          colors: const [Color(0xFF3CD687), Colors.white],
+          stops: const [0.0, 0.3],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          heroTag: 'background_top',
+        ),
+        SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+                  child: Row(
+                    children: [
+                      const CustomBackButton(),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Update Fitness Profile',
+                        style: GoogleFonts.lato(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
-                        Text(
-                          'Update Fitness Profile',
-                          style: GoogleFonts.lato(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Form(
@@ -92,11 +92,12 @@ class _UpdateMemberFitnessProfileScreenState extends State<UpdateMemberFitnessPr
     );
   }
 
+
   Widget _buildFitnessProfileCard() {
     return CustomCard(
       title: 'Fitness Profile',
       titleColor: Colors.black,
-      titleFontSize: 22,
+      titleFontSize: 21,
       children: [
         CustomDropdown(
           label: 'Workout Goal',

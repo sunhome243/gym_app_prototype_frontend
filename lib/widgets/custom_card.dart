@@ -12,15 +12,14 @@ class CustomCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.children,
-    this.titleColor = const Color(0xFF3CD687),
-    this.titleFontSize = 18,
+    this.titleColor = Colors.black,
+    this.titleFontSize = 20,
     this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -35,7 +34,7 @@ class CustomCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 5, bottom: 16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,7 +52,7 @@ class CustomCard extends StatelessWidget {
                 if (trailing != null) trailing!,
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             ...children,
           ],
         ),

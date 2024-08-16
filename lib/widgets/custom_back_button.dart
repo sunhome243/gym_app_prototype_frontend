@@ -10,7 +10,9 @@ class CustomBackButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
+          onTap: () {
+            Navigator.of(context).pop();
+          },
           behavior: HitTestBehavior.opaque,
           child: const Padding(
             padding: EdgeInsets.all(8.0),

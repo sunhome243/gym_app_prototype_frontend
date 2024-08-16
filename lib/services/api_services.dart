@@ -103,10 +103,6 @@ class ApiService {
     }
   }
 
-
-
-
-
   Future<void> createUser(Map<String, dynamic> userData) async {
     await _request('user', 'users', 'POST', body: userData);
   }
@@ -128,7 +124,9 @@ class ApiService {
       }
 
       if (response is List) {
-        final sessions = response.map((session) => SessionWithSets.fromJson(session)).toList();
+        final sessions = response
+            .map((session) => SessionWithSets.fromJson(session))
+            .toList();
         if (kDebugMode) {
           print('Parsed ${sessions.length} sessions');
         }
@@ -169,17 +167,20 @@ class ApiService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<void> requestTrainerMemberMapping(String trainerEmail, int initialSessions) async {
+  Future<void> requestTrainerMemberMapping(
+      String trainerEmail, int initialSessions) async {
     try {
-      final response = await _request('user', 'trainer-member-mapping/request', 'POST', body: {
-        'other_email': trainerEmail,
-        'initial_sessions': initialSessions,
-      });
-      
+      final response = await _request(
+          'user', 'trainer-member-mapping/request', 'POST',
+          body: {
+            'other_email': trainerEmail,
+            'initial_sessions': initialSessions,
+          });
+
       if (kDebugMode) {
         print("API Response: $response");
       }
-      
+
       if (response['id'] != null) {
         if (kDebugMode) {
           print("Mapping request successful");
@@ -196,14 +197,17 @@ class ApiService {
     }
   }
 
-  Future<void> updateTrainerMemberMappingStatus(int mappingId, String newStatus) async {
-    await _request('user', 'trainer-member-mapping/$mappingId/status', 'PATCH', body: {
-      'new_status': newStatus,
-    });
+  Future<void> updateTrainerMemberMappingStatus(
+      int mappingId, String newStatus) async {
+    await _request('user', 'trainer-member-mapping/$mappingId/status', 'PATCH',
+        body: {
+          'new_status': newStatus,
+        });
   }
 
   Future<int> getRemainingSessionsForMember(String uid) async {
-    final response = await _request('user', 'trainer-member-mapping/$uid/sessions', 'GET');
+    final response =
+        await _request('user', 'trainer-member-mapping/$uid/sessions', 'GET');
     return response['remaining_sessions'] as int;
   }
 
@@ -211,16 +215,19 @@ class ApiService {
     await _request('user', 'trainer-member-mapping/$otherUid', 'DELETE');
   }
 
-  Future<void> requestMoreSessions(String trainerUid, int additionalSessions) async {
+  Future<void> requestMoreSessions(
+      String trainerUid, int additionalSessions) async {
     try {
-      final response = await _request('user', 'request-more-sessions/$trainerUid', 'POST', body: {
-        'additional_sessions': additionalSessions,
-      });
-      
+      final response = await _request(
+          'user', 'request-more-sessions/$trainerUid', 'POST',
+          body: {
+            'additional_sessions': additionalSessions,
+          });
+
       if (kDebugMode) {
         print("API Response: $response");
       }
-      
+
       if (response['message'] != null) {
         if (kDebugMode) {
           print("Session request successful");
@@ -237,16 +244,59 @@ class ApiService {
     }
   }
 
-Future<void> addFCMToken(String token) async {
-  await _request('user', 'add-fcm-token', 'POST', body: {'token': token});
-}
+  Future<void> addFCMToken(String token) async {
+    await _request('user', 'add-fcm-token', 'POST', body: {'token': token});
+  }
 
-Future<void> removeFCMToken(String token) async {
-  await _request('user', 'remove-fcm-token', 'POST', body: {'token': token});
-}
+  Future<void> removeFCMToken(String token) async {
+    await _request('user', 'remove-fcm-token', 'POST', body: {'token': token});
+  }
 
   Future<void> updateMember(Map<String, dynamic> memberData) async {
     await _request('user', 'members/me', 'PATCH', body: memberData);
+  }
+
+  Future<SessionIDMap> createSession(int sessionTypeId, List<int> workoutKeys) async {
+    final response = await _request('workout', 'create_session', 'POST', body: {
+      'session_type_id': sessionTypeId,
+      'workout_keys': workoutKeys,
+    });
+    return SessionIDMap.fromJson(response);
+  }
+
+  Future<Map<String, dynamic>> getWorkoutRecords(int workoutKey) async {
+    final response =
+        await _request('workout', 'workout-records/$workoutKey', 'GET');
+    return response;
+  }
+
+  Future<List<WorkoutInfo>> searchWorkouts(String workoutName) async {
+    final response = await _request(
+        'workout', 'search-workouts?workout_name=$workoutName', 'GET');
+    return (response as List).map((w) => WorkoutInfo.fromJson(w)).toList();
+  }
+
+  Future<Map<String, List<WorkoutInfo>>> getWorkoutsByPart({int? workoutPartId}) async {
+    String endpoint = 'workouts-by-part';
+    if (workoutPartId != null) {
+      endpoint += '?workout_part_id=$workoutPartId';
+    }
+    final response = await _request('workout', endpoint, 'GET');
+    return Map<String, List<WorkoutInfo>>.from(
+      response.map((key, value) => MapEntry(
+            key,
+            (value as List).map((w) => WorkoutInfo.fromJson({
+              ...w as Map<String, dynamic>,
+              'workoutSets': [], // Add empty workoutSets
+            })).toList(),
+          )),
+    );
+  }
+
+  Future<SessionSaveResponse> saveSession(SessionSave sessionData) async {
+    final response = await _request('workout', 'save_session', 'POST',
+        body: sessionData.toJson());
+    return SessionSaveResponse.fromJson(response);
   }
 
 }

@@ -165,7 +165,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     return CustomCard(
       title: 'Fitness Profile',
       titleColor: Colors.black,
-      titleFontSize: 22,
+      titleFontSize: 21,
       trailing: IconButton(
         icon: const Icon(Icons.edit, color: Colors.black),
         onPressed: () {

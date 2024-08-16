@@ -55,6 +55,7 @@ dependencies:
   flutter_local_notifications: ^17.2.1+2
   firebase_database: ^11.0.4
   qr_flutter: ^4.1.0
+  flutter_animate: ^1.0.0
   
 
 dev_dependencies:
