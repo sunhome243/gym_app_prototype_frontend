@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/animated_inkwell.dart';
 import '../widgets/custom_back_button.dart';
@@ -17,15 +18,16 @@ class CustomWorkoutInitScreen extends StatefulWidget {
   final String? memberName;
 
   const CustomWorkoutInitScreen({
-    Key? key, 
-    required this.apiService, 
+    super.key,
+    required this.apiService,
     required this.workoutType,
     this.memberUid,
     this.memberName,
-  }) : super(key: key);
+  });
 
   @override
-  _CustomWorkoutInitScreenState createState() => _CustomWorkoutInitScreenState();
+  _CustomWorkoutInitScreenState createState() =>
+      _CustomWorkoutInitScreenState();
 }
 
 class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
@@ -136,7 +138,8 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
       key: ValueKey(workout.workout_key),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      transform: Matrix4.translationValues(isRemoving ? -MediaQuery.of(context).size.width : 0, 0, 0),
+      transform: Matrix4.translationValues(
+          isRemoving ? -MediaQuery.of(context).size.width : 0, 0, 0),
       child: Column(
         children: [
           ListTile(
@@ -158,7 +161,8 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
               ),
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 24),
+              icon: const Icon(Icons.remove_circle_outline,
+                  color: Colors.red, size: 24),
               onPressed: () => _removeWorkout(workout),
               tooltip: 'Remove workout',
             ),
@@ -209,7 +213,8 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color: _sessionPlan.isNotEmpty ? const Color(0xFF6F42C1) : Colors.grey,
+            color:
+                _sessionPlan.isNotEmpty ? const Color(0xFF6F42C1) : Colors.grey,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -251,7 +256,8 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     });
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
-        _sessionPlan.removeWhere((item) => item.workout_key == workout.workout_key);
+        _sessionPlan
+            .removeWhere((item) => item.workout_key == workout.workout_key);
         _removingItems.remove(workout.workout_key.toString());
       });
     });
@@ -260,12 +266,20 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
 
   void _navigateToWorkoutExecution() async {
     try {
+      if (kDebugMode) {
+        print(
+            'Creating session with workoutType: ${widget.workoutType}, memberUid: ${widget.memberUid}');
+      }
+
       final sessionIDMap = await widget.apiService.createSession(
         widget.workoutType,
-        _sessionPlan.map((w) => w.workout_key).toList(),
         memberUid: widget.memberUid,
       );
-      
+
+      if (kDebugMode) {
+        print('Session created successfully: $sessionIDMap');
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(

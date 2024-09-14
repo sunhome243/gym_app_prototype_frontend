@@ -119,7 +119,7 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
       final sessionTypeId = widget.workoutType;
       final workoutKeys = _sessionPlan.map((w) => w.workout_key).toList();
       _currentSession =
-          await widget.apiService.createSession(sessionTypeId, workoutKeys);
+          await widget.apiService.createSession(sessionTypeId);
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);

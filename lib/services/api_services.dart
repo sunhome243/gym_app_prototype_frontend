@@ -256,18 +256,34 @@ class ApiService {
     await _request('user', 'members/me', 'PATCH', body: memberData);
   }
 
-  Future<SessionIDMap> createSession(int sessionTypeId, List<int> workoutKeys, {String? memberUid}) async {
-    final body = {
+  Future<SessionIDMap> createSession(int sessionTypeId,
+      {String? memberUid}) async {
+    final Map<String, dynamic> body = {
       'session_type_id': sessionTypeId,
-      'workout_keys': workoutKeys,
     };
-
-    if (memberUid != null) {
+    if (memberUid != null && memberUid.isNotEmpty) {
       body['member_uid'] = memberUid;
     }
 
-    final response = await _request('workout', 'create_session', 'POST', body: body);
-    return SessionIDMap.fromJson(response);
+    if (kDebugMode) {
+      print('Creating session with body: $body');
+    }
+
+    try {
+      final response =
+          await _request('workout', 'create_session', 'POST', body: body);
+
+      if (kDebugMode) {
+        print('Session creation response: $response');
+      }
+
+      return SessionIDMap.fromJson(response);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error creating session: $e');
+      }
+      throw Exception('Failed to create session: $e');
+    }
   }
 
   Future<Map<String, dynamic>> getWorkoutRecords(int workoutKey) async {
@@ -282,7 +298,8 @@ class ApiService {
     return (response as List).map((w) => WorkoutInfo.fromJson(w)).toList();
   }
 
-  Future<Map<String, List<WorkoutInfo>>> getWorkoutsByPart({int? workoutPartId}) async {
+  Future<Map<String, List<WorkoutInfo>>> getWorkoutsByPart(
+      {int? workoutPartId}) async {
     String endpoint = 'workouts-by-part';
     if (workoutPartId != null) {
       endpoint += '?workout_part_id=$workoutPartId';
@@ -291,10 +308,12 @@ class ApiService {
     return Map<String, List<WorkoutInfo>>.from(
       response.map((key, value) => MapEntry(
             key,
-            (value as List).map((w) => WorkoutInfo.fromJson({
-              ...w as Map<String, dynamic>,
-              'workoutSets': [], // Add empty workoutSets
-            })).toList(),
+            (value as List)
+                .map((w) => WorkoutInfo.fromJson({
+                      ...w as Map<String, dynamic>,
+                      'workoutSets': [], // Add empty workoutSets
+                    }))
+                .toList(),
           )),
     );
   }
@@ -304,6 +323,7 @@ class ApiService {
         body: sessionData.toJson());
     return SessionSaveResponse.fromJson(response);
   }
+
   Future<Map<String, dynamic>> getTrainerInfo() async {
     return await _request('user', 'trainers/me/', 'GET');
   }
