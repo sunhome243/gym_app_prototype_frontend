@@ -13,12 +13,16 @@ import 'workout_execution_screen.dart';
 class CustomWorkoutInitScreen extends StatefulWidget {
   final ApiService apiService;
   final int workoutType;
+  final String? memberUid;
+  final String? memberName;
 
   const CustomWorkoutInitScreen({
-    super.key, 
+    Key? key, 
     required this.apiService, 
-    required this.workoutType
-  });
+    required this.workoutType,
+    this.memberUid,
+    this.memberName,
+  }) : super(key: key);
 
   @override
   _CustomWorkoutInitScreenState createState() => _CustomWorkoutInitScreenState();
@@ -259,6 +263,7 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
       final sessionIDMap = await widget.apiService.createSession(
         widget.workoutType,
         _sessionPlan.map((w) => w.workout_key).toList(),
+        memberUid: widget.memberUid,
       );
       
       Navigator.push(

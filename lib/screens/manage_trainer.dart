@@ -6,6 +6,8 @@ import '../services/api_services.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/background.dart';
 import '../widgets/animated_inkwell.dart';
+import '../widgets/custom_back_button.dart';
+import '../widgets/custom_card.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ManageTrainerScreen extends StatefulWidget {
@@ -17,13 +19,19 @@ class ManageTrainerScreen extends StatefulWidget {
 
 class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
   Map<String, dynamic>? _currentTrainer;
+  List<Map<String, dynamic>> _pendingRequests = [];
   int _remainingSessions = 0;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTrainerInfo();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await _loadTrainerInfo();
+    await _loadPendingRequests();
   }
 
   Future<void> _loadTrainerInfo() async {
@@ -32,8 +40,17 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
       final apiService = Provider.of<ApiService>(context, listen: false);
       final mappings = await apiService.getMyMappings();
       if (mappings.isNotEmpty) {
-        _currentTrainer = mappings.first;
-        _remainingSessions = await apiService.getRemainingSessionsForMember(_currentTrainer!['uid']);
+        _currentTrainer = mappings.firstWhere(
+          (mapping) => mapping['status'] == 'accepted',
+          orElse: () => <String, dynamic>{},
+        );
+        if (_currentTrainer!.isNotEmpty) {
+          _remainingSessions = await apiService
+              .getRemainingSessionsForMember(_currentTrainer!['uid']);
+        } else {
+          _currentTrainer = null;
+          _remainingSessions = 0;
+        }
       } else {
         _currentTrainer = null;
         _remainingSessions = 0;
@@ -44,6 +61,21 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
       _remainingSessions = 0;
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadPendingRequests() async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final mappings = await apiService.getMyMappings();
+      setState(() {
+        _pendingRequests = mappings
+            .where((mapping) => mapping['status'] == 'pending')
+            .toList();
+      });
+      print('Pending requests: $_pendingRequests'); // 디버그 로그 추가
+    } catch (e) {
+      print('Error loading pending requests: $e');
     }
   }
 
@@ -61,44 +93,29 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
             heroTag: 'background_top',
           ),
           SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverPersistentHeader(
-                  delegate: _SliverAppBarDelegate(
-                    minHeight: 60,
-                    maxHeight: 100,
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                            Text(
-                              'Manage Trainer',
-                              style: GoogleFonts.lato(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+                  child: Row(
+                    children: [
+                      const CustomBackButton(),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Manage Trainer',
+                        style: GoogleFonts.lato(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  pinned: true,
                 ),
-                CupertinoSliverRefreshControl(
-                  onRefresh: _loadTrainerInfo,
-                ),
-                SliverToBoxAdapter(
-                  child: _isLoading
-                      ? _buildSkeletonUI()
-                      : _buildContent(),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _isLoading ? _buildSkeletonUI() : _buildContent(),
                 ),
               ],
             ),
@@ -139,277 +156,286 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
   }
 
   Widget _buildContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _currentTrainer != null
-              ? _buildTrainerCard()
-              : _buildAddTrainerCard(),
-          const SizedBox(height: 24),
-          if (_currentTrainer != null) _buildRemainingSessions(),
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _currentTrainer != null && _currentTrainer!.isNotEmpty
+                ? _buildTrainerCard()
+                : _buildAddTrainerCard(),
+            const SizedBox(height: 24),
+            if (_currentTrainer != null && _currentTrainer!.isNotEmpty)
+              _buildRemainingSessions(),
+            if (_pendingRequests.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _buildPendingRequestsSection(),
+            ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTrainerCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return CustomCard(
+      title: 'My Trainer',
+      titleColor: Colors.black,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CD964),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: const Color(0xFF4CD964),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                  child: Center(
-                    child: Text(
-                      '${_currentTrainer!['trainer_first_name'][0]}${_currentTrainer!['trainer_last_name'][0]}',
-                      style: GoogleFonts.lato(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'My Trainer',
-                        style: GoogleFonts.lato(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_currentTrainer!['trainer_first_name']} ${_currentTrainer!['trainer_last_name']}',
-                        style: GoogleFonts.lato(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            AnimatedInkWell(
-              onTap: _showRequestMoreSessionsModal,
-              splashColor: const Color(0xFF4CD964).withOpacity(0.3),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CD964),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'Request More Sessions',
-                    style: GoogleFonts.lato(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '${_currentTrainer!['trainer_first_name'][0]}${_currentTrainer!['trainer_last_name'][0]}',
+                  style: GoogleFonts.lato(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: _showRemoveTrainerConfirmation,
-              child: Text(
-                'Remove Trainer',
-                style: GoogleFonts.lato(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w500,
-                ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_currentTrainer!['trainer_first_name']} ${_currentTrainer!['trainer_last_name']}',
+                    style: GoogleFonts.lato(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _currentTrainer!['trainer_email'],
+                    style: GoogleFonts.lato(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 20),
+        AnimatedInkWell(
+          onTap: _showRequestMoreSessionsModal,
+          splashColor: const Color(0xFF4CD964).withOpacity(0.3),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CD964),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                'Request More Sessions',
+                style: GoogleFonts.lato(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: _showRemoveTrainerConfirmation,
+          child: Text(
+            'Remove Trainer',
+            style: GoogleFonts.lato(
+              color: Colors.red,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildAddTrainerCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return CustomCard(
+      title: 'Add Your Trainer',
+      titleColor: Colors.black,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: const Color(0xFF4CD964).withOpacity(0.1),
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFF4CD964).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(CupertinoIcons.person_add, size: 40, color: Color(0xFF4CD964)),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Trainer Assigned',
-              style: GoogleFonts.lato(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add a trainer to get started on your fitness journey!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 24),
-            AnimatedInkWell(
-              onTap: _showAddTrainerModal,
-              splashColor: const Color(0xFF4CD964).withOpacity(0.3),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CD964),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'Add Trainer',
-                    style: GoogleFonts.lato(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          child: const Icon(CupertinoIcons.person_add,
+              size: 40, color: Color(0xFF4CD964)),
         ),
-      ),
+        const SizedBox(height: 24),
+        Text(
+          'No Trainer Assigned',
+          style: GoogleFonts.lato(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Add a trainer to get started on your fitness journey!',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 24),
+        AnimatedInkWell(
+          onTap: _showAddTrainerModal,
+          splashColor: const Color(0xFF4CD964).withOpacity(0.3),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CD964),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                'Add Trainer',
+                style: GoogleFonts.lato(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildRemainingSessions() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return CustomCard(
+      title: 'Remaining Sessions',
+      titleColor: Colors.black,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Remaining Sessions',
+              '$_remainingSessions',
               style: GoogleFonts.lato(
-                fontSize: 20,
+                fontSize: 64,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: const Color(0xFF4CD964),
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '$_remainingSessions',
+                  'Sessions Left',
                   style: GoogleFonts.lato(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF4CD964),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Sessions Left',
-                      style: GoogleFonts.lato(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
-                      ),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getRemainingSessionsColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getRemainingSessionsStatus(),
+                    style: GoogleFonts.lato(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: _getRemainingSessionsColor(),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _getRemainingSessionsColor().withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _getRemainingSessionsStatus(),
-                        style: GoogleFonts.lato(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: _getRemainingSessionsColor(),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildPendingRequestsSection() {
+    return CustomCard(
+      title: 'Pending Requests',
+      titleColor: Colors.black,
+      children: _pendingRequests
+          .map((request) => _buildRequestItem(request))
+          .toList(),
+    );
+  }
+
+  Widget _buildRequestItem(Map<String, dynamic> request) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: const Color(0xFF4CD964),
+            child: Text(
+              '${request['trainer_first_name'][0]}${request['trainer_last_name'][0]}',
+              style: GoogleFonts.lato(color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${request['trainer_first_name']} ${request['trainer_last_name']}',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  request['trainer_email'],
+                  style: GoogleFonts.lato(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.green),
+                onPressed: () => _handleRequestResponse(request, true),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.red),
+                onPressed: () => _handleRequestResponse(request, false),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -478,13 +504,14 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
       ],
     );
   }
-  
+
   Future<void> _addTrainer(String email, int sessions) async {
     final apiService = Provider.of<ApiService>(context, listen: false);
     try {
       await apiService.requestTrainerMemberMapping(email, sessions);
       _showSuccessDialog('Trainer request sent successfully');
       await _loadTrainerInfo();
+      await _loadPendingRequests();
     } catch (e) {
       _showErrorDialog(e.toString());
     }
@@ -521,9 +548,11 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
   Future<void> _removeTrainer() async {
     final apiService = Provider.of<ApiService>(context, listen: false);
     try {
-      await apiService.removeTrainerMemberMapping(_currentTrainer!['trainer_email']);
+      await apiService
+          .removeTrainerMemberMapping(_currentTrainer!['trainer_email']);
       _showSuccessDialog('Trainer removed successfully');
       await _loadTrainerInfo();
+      await _loadPendingRequests();
     } catch (e) {
       _showErrorDialog('Failed to remove trainer: $e');
     }
@@ -580,11 +609,62 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
   Future<void> _requestMoreSessions(int additionalSessions) async {
     final apiService = Provider.of<ApiService>(context, listen: false);
     try {
-      await apiService.requestMoreSessions(_currentTrainer!['uid'], additionalSessions);
+      await apiService.requestMoreSessions(
+          _currentTrainer!['uid'], additionalSessions);
       _showSuccessDialog('Session request sent successfully');
       await _loadTrainerInfo();
     } catch (e) {
       _showErrorDialog('Failed to request more sessions: $e');
+    }
+  }
+
+  void _handleRequestResponse(Map<String, dynamic> request, bool isAccepted) {
+    showCustomModal(
+      context: context,
+      title: isAccepted ? 'Accept Request' : 'Decline Request',
+      theme: isAccepted ? CustomModalTheme.green : CustomModalTheme.red,
+      icon: isAccepted
+          ? CupertinoIcons.check_mark_circled
+          : CupertinoIcons.xmark_circle,
+      content: Text(
+        isAccepted
+            ? 'Are you sure you want to accept this trainer request?'
+            : 'Are you sure you want to decline this trainer request?',
+        style: GoogleFonts.lato(fontSize: 16),
+        textAlign: TextAlign.center,
+      ),
+      actions: [
+        CustomModalAction(
+          text: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        CustomModalAction(
+          text: isAccepted ? 'Accept' : 'Decline',
+          isDefaultAction: true,
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await _updateRequestStatus(request, isAccepted);
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _updateRequestStatus(
+      Map<String, dynamic> request, bool isAccepted) async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      await apiService.updateTrainerMemberMappingStatus(
+        request['mapping_id'],
+        isAccepted ? 'accepted' : 'rejected',
+      );
+      _showSuccessDialog(isAccepted
+          ? 'Trainer request accepted successfully!'
+          : 'Trainer request declined successfully!');
+      await _loadTrainerInfo();
+      await _loadPendingRequests();
+    } catch (e) {
+      _showErrorDialog('Failed to update request status: $e');
     }
   }
 
@@ -628,35 +708,5 @@ class _ManageTrainerScreenState extends State<ManageTrainerScreen> {
         ),
       ],
     );
-  }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
-  });
-
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
   }
 }

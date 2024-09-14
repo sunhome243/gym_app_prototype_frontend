@@ -34,7 +34,7 @@ class CustomCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

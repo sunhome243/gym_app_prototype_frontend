@@ -9,6 +9,7 @@ import '../services/api_services.dart';
 import '../services/schemas.dart';
 import 'dart:async';
 import 'review_session_plan_screen.dart';
+import 'workout_summary_screen.dart';
 
 class WorkoutExecutionScreen extends StatefulWidget {
   final List<WorkoutInfo> sessionPlan;
@@ -28,7 +29,8 @@ class WorkoutExecutionScreen extends StatefulWidget {
   _WorkoutExecutionScreenState createState() => _WorkoutExecutionScreenState();
 }
 
-class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen> with TickerProviderStateMixin {
+class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
+    with TickerProviderStateMixin {
   late List<WorkoutInfo> _sessionPlan;
   int _currentWorkoutIndex = 0;
   int _currentSet = 1;
@@ -82,7 +84,9 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen> with Ti
   }
 
   void _initializeSwipeControllers() {
-    for (int i = 0; i < _sessionPlan[_currentWorkoutIndex].workoutSets.length; i++) {
+    for (int i = 0;
+        i < _sessionPlan[_currentWorkoutIndex].workoutSets.length;
+        i++) {
       _swipeControllers[i] = AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 250),
@@ -114,7 +118,8 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen> with Ti
     try {
       final sessionTypeId = widget.workoutType;
       final workoutKeys = _sessionPlan.map((w) => w.workout_key).toList();
-      _currentSession = await widget.apiService.createSession(sessionTypeId, workoutKeys);
+      _currentSession =
+          await widget.apiService.createSession(sessionTypeId, workoutKeys);
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -166,15 +171,17 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen> with Ti
     setState(() {
       final currentWorkout = _sessionPlan[_currentWorkoutIndex];
       final currentSet = currentWorkout.workoutSets[_currentSet - 1];
-      
+
       _completedExercises.add(ExerciseSave(
         workout_key: currentWorkout.workout_key,
-        sets: [SetSave(
-          set_num: _currentSet,
-          weight: currentSet.weight,
-          reps: currentSet.reps,
-          rest_time: currentSet.rest_time,
-        )],
+        sets: [
+          SetSave(
+            set_num: _currentSet,
+            weight: currentSet.weight,
+            reps: currentSet.reps,
+            rest_time: currentSet.rest_time,
+          )
+        ],
       ));
 
       _runningTimer = currentSet.rest_time;
@@ -207,55 +214,67 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen> with Ti
       );
       await widget.apiService.saveSession(sessionSave);
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Session saved successfully!')),
+
+      // Navigate to the WorkoutSummaryScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => WorkoutSummaryScreen(
+            completedExercises: _completedExercises,
+            workoutType: widget.workoutType,
+            onEndSession: () {
+              // Navigate back to the home screen
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          ),
+        ),
       );
-      // Navigate to summary screen or show completion dialog
     } catch (e) {
       setState(() => _isLoading = false);
       _showErrorSnackBar('Failed to save session: $e');
     }
   }
 
-void _openReviewSessionPlan() async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ReviewSessionPlanScreen(
-        sessionPlan: _sessionPlan,
-        workoutType: widget.workoutType,
-        apiService: widget.apiService,
-        currentWorkoutIndex: _currentWorkoutIndex,
-        completedExercises: _completedExercises,
+  void _openReviewSessionPlan() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReviewSessionPlanScreen(
+          sessionPlan: _sessionPlan,
+          workoutType: widget.workoutType,
+          apiService: widget.apiService,
+          currentWorkoutIndex: _currentWorkoutIndex,
+          completedExercises: _completedExercises,
+        ),
       ),
-    ),
-  );
-  if (result != null) {
-    if (result is List<WorkoutInfo>) {
-      setState(() {
-        _sessionPlan = result;
-        if (_currentWorkoutIndex >= _sessionPlan.length) {
-          _currentWorkoutIndex = _sessionPlan.length - 1;
-        }
-        if (_currentSet > _sessionPlan[_currentWorkoutIndex].workoutSets.length) {
-          _currentSet = _sessionPlan[_currentWorkoutIndex].workoutSets.length;
-        }
-        _initializeTimer();
-        _initializeSwipeControllers();
-      });
-    } else if (result is int) {
-      setState(() {
-        _currentWorkoutIndex = result;
-        _currentSet = 1;
-        _initializeTimer();
-      });
+    );
+    if (result != null) {
+      if (result is List<WorkoutInfo>) {
+        setState(() {
+          _sessionPlan = result;
+          if (_currentWorkoutIndex >= _sessionPlan.length) {
+            _currentWorkoutIndex = _sessionPlan.length - 1;
+          }
+          if (_currentSet >
+              _sessionPlan[_currentWorkoutIndex].workoutSets.length) {
+            _currentSet = _sessionPlan[_currentWorkoutIndex].workoutSets.length;
+          }
+          _initializeTimer();
+          _initializeSwipeControllers();
+        });
+      } else if (result is int) {
+        setState(() {
+          _currentWorkoutIndex = result;
+          _currentSet = 1;
+          _initializeTimer();
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
-    final currentWorkout = _sessionPlan.isNotEmpty ? _sessionPlan[_currentWorkoutIndex] : null;
+    final currentWorkout =
+        _sessionPlan.isNotEmpty ? _sessionPlan[_currentWorkoutIndex] : null;
 
     return Scaffold(
       body: Stack(
@@ -404,7 +423,7 @@ void _openReviewSessionPlan() async {
       if (index == workout.workoutSets.length) {
         return _buildAddSetButton(workout);
       }
-      
+
       final set = workout.workoutSets[index];
       final isCurrentSet = index + 1 == _currentSet;
       final isCompletedSet = index + 1 < _currentSet;
@@ -422,7 +441,8 @@ void _openReviewSessionPlan() async {
         },
         onHorizontalDragUpdate: (details) {
           if (!isCurrentSet && !isCompletedSet) {
-            final newValue = _swipeControllers[index]!.value - details.delta.dx / 80.0;
+            final newValue =
+                _swipeControllers[index]!.value - details.delta.dx / 80.0;
             _swipeControllers[index]!.value = newValue.clamp(0.0, 1.0);
           }
         },
@@ -469,12 +489,17 @@ void _openReviewSessionPlan() async {
                     ),
                   ),
                 Transform.translate(
-                  offset: Offset(isCurrentSet || isCompletedSet ? 0 : -80 * _swipeControllers[index]!.value, 0),
+                  offset: Offset(
+                      isCurrentSet || isCompletedSet
+                          ? 0
+                          : -80 * _swipeControllers[index]!.value,
+                      0),
                   child: Container(
                     height: 60,
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      color: _getSetBackgroundColor(isCurrentSet, isCompletedSet),
+                      color:
+                          _getSetBackgroundColor(isCurrentSet, isCompletedSet),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _getSetBorderColor(isCurrentSet, isCompletedSet),
@@ -495,7 +520,8 @@ void _openReviewSessionPlan() async {
                           width: 60,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _getSetNumberBackgroundColor(isCurrentSet, isCompletedSet),
+                            color: _getSetNumberBackgroundColor(
+                                isCurrentSet, isCompletedSet),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(12),
                               bottomLeft: Radius.circular(12),
@@ -506,26 +532,38 @@ void _openReviewSessionPlan() async {
                             style: GoogleFonts.lato(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _getSetNumberColor(isCurrentSet, isCompletedSet),
+                              color: _getSetNumberColor(
+                                  isCurrentSet, isCompletedSet),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Row(
                             children: [
-                              Expanded(child: _buildEditableField(set.weight.toString(), 'kg', (value) {
+                              Expanded(
+                                  child: _buildEditableField(
+                                      set.weight.toString(), 'kg', (value) {
                                 setState(() {
-                                  workout.workoutSets[index] = set.copyWith(weight: double.tryParse(value) ?? set.weight);
+                                  workout.workoutSets[index] = set.copyWith(
+                                      weight:
+                                          double.tryParse(value) ?? set.weight);
                                 });
                               }, isCompletedSet)),
-                              Expanded(child: _buildEditableField(set.reps.toString(), 'reps', (value) {
+                              Expanded(
+                                  child: _buildEditableField(
+                                      set.reps.toString(), 'reps', (value) {
                                 setState(() {
-                                  workout.workoutSets[index] = set.copyWith(reps: int.tryParse(value) ?? set.reps);
+                                  workout.workoutSets[index] = set.copyWith(
+                                      reps: int.tryParse(value) ?? set.reps);
                                 });
                               }, isCompletedSet)),
-                              Expanded(child: _buildEditableField(set.rest_time.toString(), 's', (value) {
+                              Expanded(
+                                  child: _buildEditableField(
+                                      set.rest_time.toString(), 's', (value) {
                                 setState(() {
-                                  workout.workoutSets[index] = set.copyWith(rest_time: int.tryParse(value) ?? set.rest_time);
+                                  workout.workoutSets[index] = set.copyWith(
+                                      rest_time:
+                                          int.tryParse(value) ?? set.rest_time);
                                 });
                               }, isCompletedSet)),
                             ],
@@ -539,9 +577,11 @@ void _openReviewSessionPlan() async {
             );
           },
         ),
-      ).animate()
-       .fadeIn(duration: 300.ms, curve: Curves.easeInOut)
-       .slide(begin: const Offset(0, 0.1), end: Offset.zero, duration: 300.ms, curve: Curves.easeInOut);
+      ).animate().fadeIn(duration: 300.ms, curve: Curves.easeInOut).slide(
+          begin: const Offset(0, 0.1),
+          end: Offset.zero,
+          duration: 300.ms,
+          curve: Curves.easeInOut);
     });
   }
 
@@ -586,12 +626,15 @@ void _openReviewSessionPlan() async {
           ),
         ),
       ),
-    ).animate()
-     .fadeIn(duration: 300.ms, curve: Curves.easeInOut)
-     .slide(begin: const Offset(0, 0.1), end: Offset.zero, duration: 300.ms, curve: Curves.easeInOut);
+    ).animate().fadeIn(duration: 300.ms, curve: Curves.easeInOut).slide(
+        begin: const Offset(0, 0.1),
+        end: Offset.zero,
+        duration: 300.ms,
+        curve: Curves.easeInOut);
   }
 
-  Widget _buildEditableField(String value, String unit, Function(String) onChanged, bool isCompleted) {
+  Widget _buildEditableField(
+      String value, String unit, Function(String) onChanged, bool isCompleted) {
     return Center(
       child: IntrinsicWidth(
         child: TextFormField(
@@ -605,7 +648,8 @@ void _openReviewSessionPlan() async {
           ),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             suffixText: unit,
             suffixStyle: GoogleFonts.lato(
               fontSize: 14,
@@ -617,10 +661,12 @@ void _openReviewSessionPlan() async {
           enabled: !isCompleted,
           onTap: () {
             if (!isCompleted) {
-              final TextEditingController controller = TextEditingController.fromValue(
+              final TextEditingController controller =
+                  TextEditingController.fromValue(
                 TextEditingValue(
                   text: value,
-                  selection: TextSelection(baseOffset: 0, extentOffset: value.length),
+                  selection:
+                      TextSelection(baseOffset: 0, extentOffset: value.length),
                 ),
               );
               (context as Element).markNeedsBuild();
@@ -687,7 +733,9 @@ void _openReviewSessionPlan() async {
 
   Widget _buildTimerControl() {
     final Color timerColor = _isTimerRunning
-        ? (_timer > 30 ? Colors.green : (_timer > 10 ? Colors.orange : Colors.red))
+        ? (_timer > 30
+            ? Colors.green
+            : (_timer > 10 ? Colors.orange : Colors.red))
         : Colors.grey[400]!;
 
     return GestureDetector(
@@ -704,8 +752,8 @@ void _openReviewSessionPlan() async {
           children: [
             Icon(
               _isTimerRunning
-                ? (_isTimerPaused ? Icons.play_arrow : Icons.pause)
-                : Icons.timer,
+                  ? (_isTimerPaused ? Icons.play_arrow : Icons.pause)
+                  : Icons.timer,
               color: timerColor,
             ),
             const SizedBox(width: 8),

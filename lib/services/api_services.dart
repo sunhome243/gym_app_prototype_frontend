@@ -256,11 +256,17 @@ class ApiService {
     await _request('user', 'members/me', 'PATCH', body: memberData);
   }
 
-  Future<SessionIDMap> createSession(int sessionTypeId, List<int> workoutKeys) async {
-    final response = await _request('workout', 'create_session', 'POST', body: {
+  Future<SessionIDMap> createSession(int sessionTypeId, List<int> workoutKeys, {String? memberUid}) async {
+    final body = {
       'session_type_id': sessionTypeId,
       'workout_keys': workoutKeys,
-    });
+    };
+
+    if (memberUid != null) {
+      body['member_uid'] = memberUid;
+    }
+
+    final response = await _request('workout', 'create_session', 'POST', body: body);
     return SessionIDMap.fromJson(response);
   }
 
@@ -298,5 +304,11 @@ class ApiService {
         body: sessionData.toJson());
     return SessionSaveResponse.fromJson(response);
   }
+  Future<Map<String, dynamic>> getTrainerInfo() async {
+    return await _request('user', 'trainers/me/', 'GET');
+  }
 
+  Future<void> updateTrainer(Map<String, dynamic> trainerData) async {
+    await _request('user', 'trainers/me', 'PATCH', body: trainerData);
+  }
 }

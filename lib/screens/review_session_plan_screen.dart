@@ -24,13 +24,15 @@ class ReviewSessionPlanScreen extends StatefulWidget {
   });
 
   @override
-  _ReviewSessionPlanScreenState createState() => _ReviewSessionPlanScreenState();
+  State<ReviewSessionPlanScreen> createState() => _ReviewSessionPlanScreenState();
 }
 
 class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
   late List<WorkoutInfo> _sessionPlan;
   bool _isLoading = false;
   bool _isSaving = false;
+  final Set<String> _removingItems = {};
+  late int _currentWorkoutIndex;
 
   Color get _themeColor {
     switch (widget.workoutType) {
@@ -49,6 +51,7 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
   void initState() {
     super.initState();
     _sessionPlan = List.from(widget.sessionPlan);
+    _currentWorkoutIndex = widget.currentWorkoutIndex;
   }
 
   @override
@@ -123,6 +126,15 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
           }
           final WorkoutInfo item = _sessionPlan.removeAt(oldIndex);
           _sessionPlan.insert(newIndex, item);
+          
+          // Adjust currentWorkoutIndex if necessary
+          if (_currentWorkoutIndex == oldIndex) {
+            _currentWorkoutIndex = newIndex;
+          } else if (oldIndex < _currentWorkoutIndex && newIndex >= _currentWorkoutIndex) {
+            _currentWorkoutIndex--;
+          } else if (oldIndex > _currentWorkoutIndex && newIndex <= _currentWorkoutIndex) {
+            _currentWorkoutIndex++;
+          }
         });
         HapticFeedback.mediumImpact();
       },
@@ -134,25 +146,29 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
   }
 
   Widget _buildWorkoutItem(WorkoutInfo workout, int index) {
-    final isCurrent = index == widget.currentWorkoutIndex;
-    final isCompleted = index < widget.currentWorkoutIndex;
+    final isCurrent = index == _currentWorkoutIndex;
+    final isCompleted = index < _currentWorkoutIndex;
     final completedExercise = widget.completedExercises.firstWhere(
       (exercise) => exercise.workout_key == workout.workout_key,
       orElse: () => ExerciseSave(workout_key: workout.workout_key, sets: []),
     );
+    final isRemoving = _removingItems.contains(workout.workout_key.toString());
 
-    return Dismissible(
+    return AnimatedContainer(
       key: ValueKey(workout.workout_key),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => _removeWorkout(workout),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      child: GestureDetector(
-        onTap: () => _navigateToWorkout(index),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      transform: Matrix4.translationValues(isRemoving ? -MediaQuery.of(context).size.width : 0, 0, 0),
+      child: Dismissible(
+        key: ValueKey(workout.workout_key),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => _removeWorkout(workout),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          color: Colors.red,
+          child: const Icon(Icons.delete, color: Colors.white),
+        ),
         child: Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
@@ -170,38 +186,25 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    _buildWorkoutStatusIcon(isCurrent, isCompleted, completedExercise),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            workout.workout_name,
-                            style: GoogleFonts.lato(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            workout.workout_part,
-                            style: GoogleFonts.lato(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.drag_handle, color: Colors.grey[400]),
-                  ],
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: _buildWorkoutStatusIcon(isCurrent, isCompleted, completedExercise),
+                title: Text(
+                  workout.workout_name,
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
+                subtitle: Text(
+                  workout.workout_part,
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                trailing: Icon(Icons.drag_handle, color: Colors.grey[400]),
               ),
               _buildWorkoutProgress(workout, completedExercise),
             ],
@@ -214,7 +217,7 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
   Widget _buildWorkoutStatusIcon(bool isCurrent, bool isCompleted, ExerciseSave completedExercise) {
     if (isCurrent) {
       return Icon(Icons.play_arrow, color: _themeColor, size: 24);
-    } else if (isCompleted && completedExercise.sets.length == _sessionPlan[widget.currentWorkoutIndex].workoutSets.length) {
+    } else if (isCompleted && completedExercise.sets.length == _sessionPlan[_currentWorkoutIndex].workoutSets.length) {
       return const Icon(Icons.check_circle, color: Colors.green, size: 24);
     } else {
       return const Icon(Icons.circle_outlined, color: Colors.grey, size: 24);
@@ -226,28 +229,42 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
     final totalSets = workout.workoutSets.length;
     final progress = totalSets > 0 ? (completedSets / totalSets) : 0.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             'Progress: $completedSets / $totalSets sets',
             style: GoogleFonts.lato(
               fontSize: 14,
               color: Colors.grey[600],
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: progress,
-          backgroundColor: Colors.grey[200],
-          valueColor: AlwaysStoppedAnimation<Color>(_themeColor),
-          minHeight: 6,
-        ),
-        const SizedBox(height: 16),
-      ],
+          const SizedBox(height: 8),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                child: Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _themeColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -279,11 +296,7 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
     );
   }
 
-  void _navigateToWorkout(int index) {
-    Navigator.pop(context, index);
-  }
-
-  void _navigateToAddWorkout() async {
+  Future<void> _navigateToAddWorkout() async {
     setState(() => _isLoading = true);
     try {
       final result = await Navigator.push(
@@ -296,33 +309,54 @@ class _ReviewSessionPlanScreenState extends State<ReviewSessionPlanScreen> {
           ),
         ),
       );
-      if (result != null && result is List<WorkoutInfo>) {
-        setState(() {
-          _sessionPlan = result;
-        });
-        HapticFeedback.mediumImpact();
+      if (mounted) {
+        if (result != null && result is List<WorkoutInfo>) {
+          setState(() {
+            _sessionPlan = result;
+          });
+          HapticFeedback.mediumImpact();
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load workouts: $e'), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load workouts: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   void _removeWorkout(WorkoutInfo workout) {
     setState(() {
-      _sessionPlan.removeWhere((item) => item.workout_key == workout.workout_key);
+      _removingItems.add(workout.workout_key.toString());
+    });
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _sessionPlan.removeWhere((item) => item.workout_key == workout.workout_key);
+          _removingItems.remove(workout.workout_key.toString());
+          
+          // Adjust currentWorkoutIndex if necessary
+          if (_currentWorkoutIndex >= _sessionPlan.length) {
+            _currentWorkoutIndex = _sessionPlan.length - 1;
+          }
+        });
+      }
     });
     HapticFeedback.lightImpact();
   }
 
-  void _saveAndReturn() async {
+  Future<void> _saveAndReturn() async {
     setState(() => _isSaving = true);
     // Here you might want to add any save logic, e.g., API calls
     await Future.delayed(const Duration(milliseconds: 500)); // Simulating a save operation
-    setState(() => _isSaving = false);
-    Navigator.pop(context, _sessionPlan);
+    if (mounted) {
+      setState(() => _isSaving = false);
+      Navigator.pop(context, _sessionPlan);
+    }
   }
 }

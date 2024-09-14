@@ -13,6 +13,7 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/skeleton_ui_widgets.dart';
 import 'manage_trainer.dart';
 import 'member_workout_init_screen.dart';
+import 'workout_info_screen.dart';
 
 
 class MemberHomeScreen extends StatefulWidget {
@@ -209,7 +210,10 @@ Widget _buildContent() {
           label: 'Workouts',
           iconColor: const Color(0xFF4CD964),
           onTap: () {
-            // TODO: Add functionality for Workouts
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => WorkoutInfoScreen(apiService: Provider.of<ApiService>(context, listen: false))),
+            );
           },
         ),
         QuickActionButton(

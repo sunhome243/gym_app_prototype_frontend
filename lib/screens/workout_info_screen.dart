@@ -1,36 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
 import '../widgets/custom_back_button.dart';
 import '../widgets/custom_card.dart';
-import '../widgets/background.dart';
-import '../services/api_services.dart';
 import '../services/schemas.dart';
-import 'dart:math' show pi;
 
-class AddWorkoutScreen extends StatefulWidget {
+class WorkoutInfoScreen extends StatefulWidget {
   final ApiService apiService;
-  final List<WorkoutInfo> initialSessionPlan;
-  final int workoutType;
 
-  const AddWorkoutScreen({
-    Key? key,
-    required this.apiService,
-    this.initialSessionPlan = const [],
-    required this.workoutType,
-  }) : super(key: key);
+  const WorkoutInfoScreen({super.key, required this.apiService});
 
   @override
-  _AddWorkoutScreenState createState() => _AddWorkoutScreenState();
+  _WorkoutInfoScreenState createState() => _WorkoutInfoScreenState();
 }
 
-class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProviderStateMixin {
+class _WorkoutInfoScreenState extends State<WorkoutInfoScreen> {
   Map<String, List<WorkoutInfo>> _workoutsByPart = {};
   List<WorkoutInfo> _filteredWorkouts = [];
-  List<WorkoutInfo> _sessionPlan = [];
-  String _searchQuery = '';
   bool _isLoading = true;
   String _selectedPart = 'All';
+  String _searchQuery = '';
 
   final List<String> _workoutParts = [
     'All',
@@ -41,45 +31,10 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
     'Shoulders'
   ];
 
-  late final Map<String, AnimationController> _iconAnimationControllers = {};
-
-  final ScrollController _workoutListScrollController = ScrollController();
-
-  Color get _themeColor {
-    switch (widget.workoutType) {
-      case 1:
-        return const Color(0xFF00CED1); // AI
-      case 2:
-        return const Color(0xFFF39C12); // Quest
-      case 3:
-        return const Color(0xFF6F42C1); // Custom
-      default:
-        return Colors.blue;
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _sessionPlan = List.from(widget.initialSessionPlan);
     _loadWorkouts();
-
-    for (var workout in _sessionPlan) {
-      _iconAnimationControllers[workout.workout_name] = AnimationController(
-        duration: const Duration(milliseconds: 300),
-        vsync: this,
-        value: 1.0,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _iconAnimationControllers.values) {
-      controller.dispose();
-    }
-    _workoutListScrollController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadWorkouts() async {
@@ -132,7 +87,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
         children: [
           Background(
             height: MediaQuery.of(context).size.height,
-            colors: [_themeColor, Colors.white],
+            colors: const [Color(0xFF4CD964), Colors.white],
             stops: const [0.0, 0.3],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -149,7 +104,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
                       const CustomBackButton(),
                       const SizedBox(width: 8),
                       Text(
-                        'Add Workout',
+                        'Workouts',
                         style: GoogleFonts.lato(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -172,9 +127,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
                       ? const Center(child: CircularProgressIndicator())
                       : _buildWorkoutList(),
                 ),
-                const SizedBox(height: 16),
-                _buildSessionPlanList(),
-                _buildDoneButton(),
               ],
             ),
           ),
@@ -195,18 +147,18 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
         },
         decoration: InputDecoration(
           hintText: 'Search workouts',
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.2),
-          hintStyle: GoogleFonts.lato(color: Colors.white70),
+          fillColor: Colors.white.withOpacity(0.4),
+          hintStyle: GoogleFonts.lato(color: Colors.grey),
           contentPadding:
               const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         ),
-        style: GoogleFonts.lato(color: Colors.white),
+        style: GoogleFonts.lato(color: Colors.grey),
       ),
     );
   }
@@ -234,7 +186,9 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
                     ? Colors.white
                     : Colors.white.withOpacity(0.3),
                 labelStyle: GoogleFonts.lato(
-                  color: _selectedPart == part ? _themeColor : Colors.grey,
+                  color: _selectedPart == part
+                      ? const Color(0xFF4CD964)
+                      : Colors.grey,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -253,23 +207,12 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
         titleColor: Colors.black,
         children: [
           SizedBox(
-            height: MediaQuery.of(context).size.height * 0.356,
+            height: MediaQuery.of(context).size.height * 0.5,
             child: ListView.builder(
-              controller: _workoutListScrollController,
               itemCount: _filteredWorkouts.length,
               padding: EdgeInsets.zero,
               itemBuilder: (context, index) {
                 final workout = _filteredWorkouts[index];
-                final isAdded = _sessionPlan.contains(workout);
-
-                _iconAnimationControllers[workout.workout_name] ??= AnimationController(
-                  duration: const Duration(milliseconds: 300),
-                  vsync: this,
-                  value: isAdded ? 1.0 : 0.0,
-                );
-
-                final iconAnimationController = _iconAnimationControllers[workout.workout_name]!;
-
                 return ListTile(
                   title: Text(
                     workout.workout_name,
@@ -286,20 +229,16 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
                       color: Colors.black54,
                     ),
                   ),
-                  trailing: GestureDetector(
-                    onTap: () => _toggleWorkout(workout),
-                    child: AnimatedBuilder(
-                      animation: iconAnimationController,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: iconAnimationController.value * pi / 4,
-                          child: Icon(
-                            Icons.add_circle_outline,
-                            color: Color.lerp(Colors.green, Colors.red, iconAnimationController.value),
-                            size: 28,
-                          ),
-                        );
-                      },
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CD964).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _getIconForWorkoutPart(workout.workout_part),
+                      color: const Color(0xFF4CD964),
+                      size: 24,
                     ),
                   ),
                 );
@@ -311,100 +250,57 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> with TickerProvider
     );
   }
 
-  Widget _buildSessionPlanList() {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'Session Plan',
-              style: GoogleFonts.lato(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _sessionPlan.length,
-              itemBuilder: (context, index) {
-                final workout = _sessionPlan[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Chip(
-                    label: Text(workout.workout_name),
-                    onDeleted: () => _toggleWorkout(workout),
-                    deleteIcon: const Icon(Icons.close, size: 18),
-                    backgroundColor: _themeColor.withOpacity(0.1),
-                    deleteIconColor: Colors.red,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+  IconData _getIconForWorkoutPart(String part) {
+    switch (part.toLowerCase()) {
+      case 'chest':
+        return Icons.accessibility_new;
+      case 'legs':
+        return Icons.directions_run;
+      case 'back':
+        return Icons.airline_seat_flat;
+      case 'arms':
+        return Icons.sports_handball;
+      case 'shoulders':
+        return Icons.expand_more;
+      default:
+        return Icons.fitness_center;
+    }
   }
+}
 
-  Widget _buildDoneButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: AnimatedInkWell(
-        onTap: () => Navigator.pop(context, _sessionPlan),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          decoration: BoxDecoration(
-            color: _themeColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            'Done',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.lato(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+class Background extends StatelessWidget {
+  final double height;
+  final List<Color> colors;
+  final List<double> stops;
+  final AlignmentGeometry begin;
+  final AlignmentGeometry end;
+  final String heroTag;
+
+  const Background({
+    super.key,
+    required this.height,
+    required this.colors,
+    required this.stops,
+    required this.begin,
+    required this.end,
+    required this.heroTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Hero(
+      tag: heroTag,
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: colors,
+            stops: stops,
+            begin: begin,
+            end: end,
           ),
         ),
       ),
     );
-  }
-
-  void _toggleWorkout(WorkoutInfo workout) {
-    final isAdded = _sessionPlan.contains(workout);
-    final controller = _iconAnimationControllers[workout.workout_name]!;
-
-    setState(() {
-      if (isAdded) {
-        _removeFromSessionPlan(workout);
-        controller.reverse();
-      } else {
-        _addToSessionPlan(workout);
-        controller.forward();
-      }
-    });
-  }
-
-  void _addToSessionPlan(WorkoutInfo workout) {
-    if (!_sessionPlan.contains(workout)) {
-      setState(() {
-        _sessionPlan.add(workout);
-      });
-    }
-  }
-
-  void _removeFromSessionPlan(WorkoutInfo workout) {
-    setState(() {
-      _sessionPlan.remove(workout);
-    });
   }
 }
