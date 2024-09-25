@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../widgets/animated_inkwell.dart';
 import '../widgets/custom_card.dart';
 import '../widgets/background.dart';
 import '../services/api_services.dart';

@@ -12,14 +12,14 @@ class CustomDialog extends StatelessWidget {
   final String? infoTooltipContent;
 
   const CustomDialog({
-    Key? key,
+    super.key,
     this.theme = CustomDialogTheme.blue,
     required this.icon,
     required this.title,
     required this.content,
     this.actions = const [],
     this.infoTooltipContent,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

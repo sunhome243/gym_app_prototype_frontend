@@ -14,11 +14,11 @@ class AddWorkoutScreen extends StatefulWidget {
   final int workoutType;
 
   const AddWorkoutScreen({
-    Key? key,
+    super.key,
     required this.apiService,
     this.initialSessionPlan = const [],
     required this.workoutType,
-  }) : super(key: key);
+  });
 
   @override
   _AddWorkoutScreenState createState() => _AddWorkoutScreenState();

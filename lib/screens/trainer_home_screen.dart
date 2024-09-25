@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
 import 'trainer_profile_screen.dart';

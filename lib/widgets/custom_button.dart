@@ -9,13 +9,13 @@ class CustomUpdateButton extends StatelessWidget {
   final double? width;
 
   const CustomUpdateButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.text = 'Update',
     this.backgroundColor = const Color(0xFF3CD687),
     this.textColor = Colors.white,
     this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

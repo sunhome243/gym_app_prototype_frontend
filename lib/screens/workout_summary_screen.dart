@@ -12,11 +12,11 @@ class WorkoutSummaryScreen extends StatelessWidget {
   final VoidCallback onEndSession;
 
   const WorkoutSummaryScreen({
-    Key? key,
+    super.key,
     required this.completedExercises,
     required this.workoutType,
     required this.onEndSession,
-  }) : super(key: key);
+  });
 
   Color get _themeColor {
     switch (workoutType) {

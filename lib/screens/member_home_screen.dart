@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/quick_action_button.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/background.dart';
 import '../widgets/custom_card.dart';
 import '../widgets/animated_inkwell.dart';
 import 'all_sessions_screen.dart';
