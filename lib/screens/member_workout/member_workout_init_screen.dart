@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
-import '../widgets/custom_card.dart';
-import '../services/api_services.dart';
+import '../../widgets/animated_inkwell.dart';
+import '../../widgets/custom_back_button.dart';
+import '../../widgets/custom_card.dart';
+import '../../services/api_services.dart';
 import 'custom_workout_init.dart';
 
 // 페이드 애니메이션을 위한 PageRouteBuilder

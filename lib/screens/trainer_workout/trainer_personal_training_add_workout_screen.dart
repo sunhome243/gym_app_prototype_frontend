@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
-import '../widgets/custom_card.dart';
-import '../widgets/background.dart';
-import '../services/api_services.dart';
-import '../services/schemas.dart';
+import '../../widgets/animated_inkwell.dart';
+import '../../widgets/custom_back_button.dart';
+import '../../widgets/custom_card.dart';
+import '../../widgets/background.dart';
+import '../../services/api_services.dart';
+import '../../services/schemas.dart';
 import 'dart:math' show pi;
 
-class AddWorkoutScreen extends StatefulWidget {
+class TrainerPersonalTrainingAddWorkoutScreen extends StatefulWidget {
   final ApiService apiService;
   final List<WorkoutInfo> initialSessionPlan;
-  final int workoutType;
 
-  const AddWorkoutScreen({
-    super.key,
+  const TrainerPersonalTrainingAddWorkoutScreen({
+    Key? key,
     required this.apiService,
     this.initialSessionPlan = const [],
-    required this.workoutType,
-  });
+  }) : super(key: key);
 
   @override
-  _AddWorkoutScreenState createState() => _AddWorkoutScreenState();
+  _TrainerPersonalTrainingAddWorkoutScreenState createState() =>
+      _TrainerPersonalTrainingAddWorkoutScreenState();
 }
 
-class _AddWorkoutScreenState extends State<AddWorkoutScreen>
+class _TrainerPersonalTrainingAddWorkoutScreenState
+    extends State<TrainerPersonalTrainingAddWorkoutScreen>
     with TickerProviderStateMixin {
   Map<String, List<WorkoutInfo>> _workoutsByPart = {};
   List<WorkoutInfo> _filteredWorkouts = [];
@@ -46,20 +46,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen>
 
   final ScrollController _workoutListScrollController = ScrollController();
 
-  Color get _themeColor {
-    switch (widget.workoutType) {
-      case 1:
-        return const Color(0xFF00CED1); // AI
-      case 2:
-        return const Color(0xFFF39C12); // Quest
-      case 3:
-        return const Color(0xFF6F42C1); // Custom
-      case 4:
-        return const Color(0xFF6EB6FF); // Custom
-      default:
-        return Colors.blue;
-    }
-  }
+  final Color _themeColor = const Color(0xFF6EB6FF);
 
   @override
   void initState() {
@@ -265,15 +252,13 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen>
                 final workout = _filteredWorkouts[index];
                 final isAdded = _sessionPlan.contains(workout);
 
-                _iconAnimationControllers[workout.workout_name] ??=
-                    AnimationController(
+                _iconAnimationControllers[workout.workout_name] ??= AnimationController(
                   duration: const Duration(milliseconds: 300),
                   vsync: this,
                   value: isAdded ? 1.0 : 0.0,
                 );
 
-                final iconAnimationController =
-                    _iconAnimationControllers[workout.workout_name]!;
+                final iconAnimationController = _iconAnimationControllers[workout.workout_name]!;
 
                 return ListTile(
                   title: Text(
@@ -300,8 +285,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen>
                           angle: iconAnimationController.value * pi / 4,
                           child: Icon(
                             Icons.add_circle_outline,
-                            color: Color.lerp(Colors.green, Colors.red,
-                                iconAnimationController.value),
+                            color: Color.lerp(Colors.green, Colors.red, iconAnimationController.value),
                             size: 28,
                           ),
                         );

@@ -10,13 +10,14 @@ import 'member_profile_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/skeleton_ui_widgets.dart';
 import 'manage_trainer.dart';
-import 'member_workout_init_screen.dart';
+import 'member_workout/member_workout_init_screen.dart';
 import 'workout_info_screen.dart';
-
+import 'package:intl/intl.dart';
+import '../services/schemas.dart';
 
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
-  
+
   @override
   _MemberHomeScreenState createState() => _MemberHomeScreenState();
 }
@@ -25,11 +26,18 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
   int _selectedIndex = 1;
   Map<String, dynamic>? _userInfo;
   bool _isLoading = true;
+  List<SessionWithSets> _recentSessions = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserInfo();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchRecentSessions();
   }
 
   Future<void> _fetchUserInfo() async {
@@ -48,6 +56,19 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchRecentSessions() async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final sessions = await apiService.getSessions();
+      setState(() {
+        _recentSessions = sessions
+          ..sort((a, b) => b.workout_date.compareTo(a.workout_date));
+      });
+    } catch (e) {
+      print('Error fetching recent sessions: $e');
     }
   }
 
@@ -112,35 +133,35 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     );
   }
 
-Widget _buildContent() {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 3, 24, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildGreeting(),
-            SizedBox(height: constraints.maxHeight * 0.02),
-            _buildQuickActions(),
-            SizedBox(height: constraints.maxHeight * 0.02),
-            Expanded(
-              flex: 3,
-              child: _buildWorkoutSummaryCard(),
-            ),
-            SizedBox(height: constraints.maxHeight * 0.02),
-            Expanded(
-              flex: 4,
-              child: _buildRecentSessionsCard(),
-            ),
-            SizedBox(height: constraints.maxHeight * 0.02),
-            _buildStartSessionButton(),
-          ],
-        ),
-      );
-    },
-  );
-}
+  Widget _buildContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 3, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGreeting(),
+              SizedBox(height: constraints.maxHeight * 0.02),
+              _buildQuickActions(),
+              SizedBox(height: constraints.maxHeight * 0.02),
+              Expanded(
+                flex: 3,
+                child: _buildWorkoutSummaryCard(),
+              ),
+              SizedBox(height: constraints.maxHeight * 0.02),
+              Expanded(
+                flex: 4,
+                child: _buildRecentSessionsCard(),
+              ),
+              SizedBox(height: constraints.maxHeight * 0.02),
+              _buildStartSessionButton(),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildGreeting() {
     final firstName = _userInfo?['first_name'] ?? 'Member';
@@ -210,7 +231,10 @@ Widget _buildContent() {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => WorkoutInfoScreen(apiService: Provider.of<ApiService>(context, listen: false))),
+              MaterialPageRoute(
+                  builder: (context) => WorkoutInfoScreen(
+                      apiService:
+                          Provider.of<ApiService>(context, listen: false))),
             );
           },
         ),
@@ -239,145 +263,199 @@ Widget _buildContent() {
     );
   }
 
-Widget _buildWorkoutSummaryCard() {
-  return CustomCard(
-    title: "This Week's Progress",
-    titleColor: Colors.black,
-    titleFontSize: 18,
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildProgressItem('Workouts', '4/5', Icons.fitness_center),
-            _buildProgressItem('Calories', '1,200', Icons.local_fire_department),
-            _buildProgressItem('Time', '3h 45m', Icons.timer),
-          ],
+  Widget _buildWorkoutSummaryCard() {
+    return CustomCard(
+      title: "This Week's Progress",
+      titleColor: Colors.black,
+      titleFontSize: 18,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildProgressItem('Workouts', '4/5', Icons.fitness_center),
+              _buildProgressItem(
+                  'Calories', '1,200', Icons.local_fire_department),
+              _buildProgressItem('Time', '3h 45m', Icons.timer),
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-Widget _buildProgressItem(String label, String value, IconData icon) {
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, color: const Color(0xFF4CD964), size: 24),
-      const SizedBox(height: 7),
-      Text(
-        value,
-        style: GoogleFonts.lato(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+  Widget _buildProgressItem(String label, String value, IconData icon) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: const Color(0xFF4CD964), size: 24),
+        const SizedBox(height: 7),
+        Text(
+          value,
+          style: GoogleFonts.lato(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        label,
-        style: GoogleFonts.lato(
-          fontSize: 12,
-          color: Colors.grey[600],
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.lato(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-Widget _buildRecentSessionsCard() {
-  return CustomCard(
-    title: 'Recent Sessions',
-    titleColor: Colors.black,
-    titleFontSize: 18,
-    trailing: AnimatedInkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
-        );
-      },
-      child: const Icon(Icons.arrow_forward, color: Color(0xFF4CD964), size: 24),
-    ),
-    children: [
-      Column(
-        children: List.generate(2, (index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
+  Widget _buildRecentSessionsCard() {
+    return CustomCard(
+      title: 'Recent Sessions',
+      titleColor: Colors.black,
+      titleFontSize: 18,
+      trailing: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+          );
+        },
+        child: Text(
+          'See All',
+          style: GoogleFonts.lato(
+            color: const Color(0xFF4CD964),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      children: [
+        FutureBuilder<List<SessionWithSets>>(
+          future: Provider.of<ApiService>(context, listen: false).getSessions(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No recent sessions'));
+            } else {
+              final recentSessions = snapshot.data!.take(2).toList();
+              return Column(
+                children: recentSessions
+                    .map((session) => _buildSessionItem(session))
+                    .toList(),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSessionItem(SessionWithSets session) {
+    IconData iconData;
+    Color iconColor;
+    String sessionType;
+
+    if (session.is_pt) {
+      iconData = Icons.person;
+      iconColor = Colors.blue;
+      sessionType = 'PT Session';
+    } else if (session.session_type_id == 1) {
+      iconData = Icons.auto_awesome;
+      iconColor = Colors.purple;
+      sessionType = 'AI Workout';
+    } else {
+      iconData = Icons.fitness_center;
+      iconColor = Colors.green;
+      sessionType = 'Custom Workout';
+    }
+
+    String formattedDate = 'No date';
+    if (session.workout_date.isNotEmpty) {
+      try {
+        DateTime dateTime = DateTime.parse(session.workout_date);
+        formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+      } catch (e) {
+        print('Error parsing date: ${e.toString()}');
+        formattedDate = 'Invalid date';
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(iconData, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CD964).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                Text(
+                  sessionType,
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: const Icon(Icons.fitness_center, color: Color(0xFF4CD964), size: 24),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Full Body Workout',
-                        style: GoogleFonts.lato(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${DateTime.now().subtract(Duration(days: index)).toString().split(' ')[0]} • 45 min',
-                        style: GoogleFonts.lato(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 4),
+                Text(
+                  formattedDate,
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    color: Colors.grey[600],
                   ),
                 ),
               ],
             ),
-          );
-        }),
+          ),
+        ],
       ),
-    ],
-  );
-}
+    );
+  }
 
-Widget _buildStartSessionButton() {
-  return AnimatedInkWell(
-    onTap: () {
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      Navigator.of(context).push(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              MemberWorkoutInitScreen(apiService: apiService),
-          transitionDuration: Duration.zero, // Instantly transition
+  Widget _buildStartSessionButton() {
+    return AnimatedInkWell(
+      onTap: () {
+        final apiService = Provider.of<ApiService>(context, listen: false);
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                MemberWorkoutInitScreen(apiService: apiService),
+            transitionDuration: Duration.zero, // Instantly transition
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFF4CD964),
+          borderRadius: BorderRadius.circular(10),
         ),
-      );
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4CD964),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        'Start New Session',
-        textAlign: TextAlign.center,
-        style: GoogleFonts.lato(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+        child: Text(
+          'Start New Session',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lato(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   final List<CustomBottomNavItem> _navItems = [
     CustomBottomNavItem(

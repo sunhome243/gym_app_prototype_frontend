@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/api_services.dart';
 import '../widgets/animated_inkwell.dart';
 import 'trainer_profile_screen.dart';
-import 'trainer_workout_init_screen.dart';
+import 'trainer_workout/trainer_workout_init_screen.dart';
 import '../widgets/custom_modal.dart';
 import '../widgets/custom_menu.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
@@ -251,13 +251,10 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
       title: "My Members",
       titleColor: Colors.black,
       titleFontSize: 18,
-      trailing: AnimatedInkWell(
-        onTap: _showAddMemberModal,
-        child: const Icon(Icons.add, color: Color(0xFF6EB6FF), size: 24),
-      ),
       children: [
+        const SizedBox(height: 0),
         SizedBox(
-          height: 100,
+          height: 90,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _members.length + 1,
@@ -316,18 +313,39 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
           _showDeleteMenu(context, member, tapPosition);
         },
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: const Color(0xFF6EB6FF),
-                  child: Text(
-                    '${member['member_first_name'][0]}${member['member_last_name'][0]}',
-                    style: GoogleFonts.lato(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF6EB6FF),
+                        const Color(0xFF6EB6FF).withOpacity(0.7),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${member['member_first_name'][0]}${member['member_last_name'][0]}',
+                      style: GoogleFonts.lato(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -340,6 +358,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                       decoration: BoxDecoration(
                         color: statusColor,
                         shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: Text(
                         remainingSessions.toString(),
@@ -361,6 +380,13 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            Text(
+              statusText,
+              style: GoogleFonts.lato(
+                fontSize: 10,
+                color: statusColor,
+              ),
+            ),
           ],
         ),
       ),
@@ -376,16 +402,20 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                color: const Color(0xFF6EB6FF).withOpacity(0.2),
                 shape: BoxShape.circle,
+                color: const Color(0xFF6EB6FF).withOpacity(0.1),
+                border: Border.all(
+                  color: const Color(0xFF6EB6FF),
+                  width: 1.5,
+                ),
               ),
               child: const Icon(
                 Icons.add,
                 color: Color(0xFF6EB6FF),
-                size: 30,
+                size: 24,
               ),
             ),
             const SizedBox(height: 4),
@@ -394,6 +424,14 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               style: GoogleFonts.lato(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
+                color: const Color(0xFF6EB6FF),
+              ),
+            ),
+            Text(
+              'Member',
+              style: GoogleFonts.lato(
+                fontSize: 10,
+                color: const Color(0xFF6EB6FF),
               ),
             ),
           ],
@@ -461,13 +499,25 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     return AnimatedInkWell(
       onTap: () {
         final apiService = Provider.of<ApiService>(context, listen: false);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                TrainerWorkoutInitScreen(apiService: apiService),
-          ),
-        );
+        final trainerUid = _trainerInfo?['uid'];
+        if (trainerUid != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TrainerWorkoutInitScreen(
+                apiService: apiService,
+                trainerUid: trainerUid,
+              ),
+            ),
+          );
+        } else {
+          // trainerUid가 null인 경우 에러 처리
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Trainer information not available. Please try again.')),
+          );
+        }
       },
       child: Container(
         width: double.infinity,

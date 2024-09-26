@@ -2,33 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../widgets/custom_card.dart';
-import '../widgets/background.dart';
-import '../services/api_services.dart';
-import '../services/schemas.dart';
+import '../../widgets/custom_card.dart';
+import '../../widgets/background.dart';
+import '../../services/api_services.dart';
+import '../../services/schemas.dart';
 import 'dart:async';
-import 'review_session_plan_screen.dart';
-import 'workout_summary_screen.dart';
+import '../trainer_workout/trainer_review_session.dart';
+import '../trainer_workout/trainer_workout_summary.dart';
 
-class WorkoutExecutionScreen extends StatefulWidget {
+class TrainerPersonalTrainingExecutionScreen extends StatefulWidget {
   final List<WorkoutInfo> sessionPlan;
-  final int workoutType;
   final ApiService apiService;
   final SessionIDMap sessionIDMap;
+  final String trainerUid;
+  final String memberUid;
+  final String memberName;
 
-  const WorkoutExecutionScreen({
+  const TrainerPersonalTrainingExecutionScreen({
     super.key,
     required this.sessionPlan,
-    required this.workoutType,
     required this.apiService,
     required this.sessionIDMap,
+    required this.trainerUid,
+    required this.memberUid,
+    required this.memberName,
   });
 
   @override
-  _WorkoutExecutionScreenState createState() => _WorkoutExecutionScreenState();
+  _TrainerPersonalTrainingExecutionScreenState createState() =>
+      _TrainerPersonalTrainingExecutionScreenState();
 }
 
-class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
+class _TrainerPersonalTrainingExecutionScreenState
+    extends State<TrainerPersonalTrainingExecutionScreen>
     with TickerProviderStateMixin {
   late List<WorkoutInfo> _sessionPlan;
   int _currentWorkoutIndex = 0;
@@ -39,24 +45,13 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
   bool _isTimerPaused = false;
   Timer? _timerInstance;
   SessionIDMap? _currentSession;
-  final List<ExerciseSave> _completedExercises = []; // Added this line
+  final List<ExerciseSave> _completedExercises = [];
   bool _isLoading = false;
   late AnimationController _setAnimationController;
   bool _hasShownSlideHint = false;
   final Map<int, AnimationController> _swipeControllers = {};
 
-  Color get _themeColor {
-    switch (widget.workoutType) {
-      case 1:
-        return const Color(0xFF00CED1); // AI
-      case 2:
-        return const Color(0xFFF39C12); // Quest
-      case 3:
-        return const Color(0xFF6F42C1); // Custom
-      default:
-        return Colors.blue;
-    }
-  }
+  Color get _themeColor => const Color(0xFF6EB6FF);
 
   @override
   void initState() {
@@ -115,10 +110,7 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
   Future<void> _createSession() async {
     setState(() => _isLoading = true);
     try {
-      final sessionTypeId = widget.workoutType;
-      final workoutKeys = _sessionPlan.map((w) => w.workout_key).toList();
-      _currentSession =
-          await widget.apiService.createSession(sessionTypeId);
+      _currentSession = widget.sessionIDMap;
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -217,9 +209,9 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
       // Navigate to the WorkoutSummaryScreen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => WorkoutSummaryScreen(
+          builder: (context) => TrainerWorkoutSummaryScreen(
             completedExercises: _completedExercises,
-            workoutType: widget.workoutType,
+            memberName: widget.memberName,
             onEndSession: () {
               // Navigate back to the home screen
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -237,12 +229,12 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ReviewSessionPlanScreen(
+        builder: (context) => TrainerReviewSessionPlanScreen(
           sessionPlan: _sessionPlan,
-          workoutType: widget.workoutType,
           apiService: widget.apiService,
           currentWorkoutIndex: _currentWorkoutIndex,
           completedExercises: _completedExercises,
+          memberName: widget.memberName,
         ),
       ),
     );
@@ -332,14 +324,26 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              currentWorkout?.workout_name ?? 'Workout',
-              style: GoogleFonts.lato(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  currentWorkout?.workout_name ?? 'Workout',
+                  style: GoogleFonts.lato(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Training ${widget.memberName}',
+                  style: GoogleFonts.lato(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -507,7 +511,7 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
                       boxShadow: [
                         if (isCurrentSet)
                           BoxShadow(
-                            color: Colors.blue.withOpacity(0.3),
+                            color: _themeColor.withOpacity(0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -677,25 +681,25 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
   }
 
   Color _getSetBackgroundColor(bool isCurrentSet, bool isCompletedSet) {
-    if (isCurrentSet) return Colors.blue.withOpacity(0.1);
+    if (isCurrentSet) return _themeColor.withOpacity(0.1);
     if (isCompletedSet) return Colors.grey[200]!;
     return Colors.white;
   }
 
   Color _getSetBorderColor(bool isCurrentSet, bool isCompletedSet) {
-    if (isCurrentSet) return Colors.blue;
+    if (isCurrentSet) return _themeColor;
     if (isCompletedSet) return Colors.grey[400]!;
     return Colors.grey[300]!;
   }
 
   Color _getSetNumberBackgroundColor(bool isCurrentSet, bool isCompletedSet) {
-    if (isCurrentSet) return Colors.blue.withOpacity(0.2);
+    if (isCurrentSet) return _themeColor.withOpacity(0.2);
     if (isCompletedSet) return Colors.grey[300]!;
     return Colors.grey[100]!;
   }
 
   Color _getSetNumberColor(bool isCurrentSet, bool isCompletedSet) {
-    if (isCurrentSet) return Colors.blue;
+    if (isCurrentSet) return _themeColor;
     if (isCompletedSet) return Colors.grey[600]!;
     return Colors.black87;
   }
@@ -783,7 +787,7 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
         _nextSet();
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue,
+        backgroundColor: _themeColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

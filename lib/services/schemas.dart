@@ -5,7 +5,8 @@ part 'schemas.g.dart';
 @JsonSerializable()
 class SessionWithSets {
   final int session_id;
-  final DateTime workout_date;
+  @JsonKey(name: 'workout_date', defaultValue: '')
+  final String workout_date;
   final String member_uid;
   final String? trainer_uid;
   final bool is_pt;
@@ -22,7 +23,8 @@ class SessionWithSets {
     required this.sets,
   });
 
-  factory SessionWithSets.fromJson(Map<String, dynamic> json) => _$SessionWithSetsFromJson(json);
+  factory SessionWithSets.fromJson(Map<String, dynamic> json) =>
+      _$SessionWithSetsFromJson(json);
   Map<String, dynamic> toJson() => _$SessionWithSetsToJson(this);
 }
 
@@ -40,7 +42,8 @@ class SetResponse {
     required this.rest_time,
   });
 
-  factory SetResponse.fromJson(Map<String, dynamic> json) => _$SetResponseFromJson(json);
+  factory SetResponse.fromJson(Map<String, dynamic> json) =>
+      _$SetResponseFromJson(json);
   Map<String, dynamic> toJson() => _$SetResponseToJson(this);
 }
 
@@ -59,7 +62,8 @@ class WorkoutInfo {
     this.workoutSets = const [],
   });
 
-  factory WorkoutInfo.fromJson(Map<String, dynamic> json) => _$WorkoutInfoFromJson(json);
+  factory WorkoutInfo.fromJson(Map<String, dynamic> json) =>
+      _$WorkoutInfoFromJson(json);
   Map<String, dynamic> toJson() => _$WorkoutInfoToJson(this);
 }
 
@@ -75,7 +79,8 @@ class WorkoutSet {
     required this.rest_time,
   });
 
-  factory WorkoutSet.fromJson(Map<String, dynamic> json) => _$WorkoutSetFromJson(json);
+  factory WorkoutSet.fromJson(Map<String, dynamic> json) =>
+      _$WorkoutSetFromJson(json);
   Map<String, dynamic> toJson() => _$WorkoutSetToJson(this);
 
   WorkoutSet copyWith({
@@ -111,7 +116,8 @@ class SessionIDMap {
     this.quest_id,
   });
 
-  factory SessionIDMap.fromJson(Map<String, dynamic> json) => _$SessionIDMapFromJson(json);
+  factory SessionIDMap.fromJson(Map<String, dynamic> json) =>
+      _$SessionIDMapFromJson(json);
   Map<String, dynamic> toJson() => _$SessionIDMapToJson(this);
 }
 
@@ -129,7 +135,8 @@ class SetSave {
     required this.rest_time,
   });
 
-  factory SetSave.fromJson(Map<String, dynamic> json) => _$SetSaveFromJson(json);
+  factory SetSave.fromJson(Map<String, dynamic> json) =>
+      _$SetSaveFromJson(json);
   Map<String, dynamic> toJson() => _$SetSaveToJson(this);
 }
 
@@ -143,7 +150,8 @@ class ExerciseSave {
     required this.sets,
   });
 
-  factory ExerciseSave.fromJson(Map<String, dynamic> json) => _$ExerciseSaveFromJson(json);
+  factory ExerciseSave.fromJson(Map<String, dynamic> json) =>
+      _$ExerciseSaveFromJson(json);
   Map<String, dynamic> toJson() => _$ExerciseSaveToJson(this);
 }
 
@@ -157,7 +165,8 @@ class SessionSave {
     required this.exercises,
   });
 
-  factory SessionSave.fromJson(Map<String, dynamic> json) => _$SessionSaveFromJson(json);
+  factory SessionSave.fromJson(Map<String, dynamic> json) =>
+      _$SessionSaveFromJson(json);
   Map<String, dynamic> toJson() => _$SessionSaveToJson(this);
 }
 
@@ -181,6 +190,7 @@ class SessionSaveResponse {
     this.quest_id,
   });
 
-  factory SessionSaveResponse.fromJson(Map<String, dynamic> json) => _$SessionSaveResponseFromJson(json);
+  factory SessionSaveResponse.fromJson(Map<String, dynamic> json) =>
+      _$SessionSaveResponseFromJson(json);
   Map<String, dynamic> toJson() => _$SessionSaveResponseToJson(this);
 }

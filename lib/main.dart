@@ -5,6 +5,7 @@ import 'screens/login_screen.dart';
 import 'screens/sign_up_screen.dart';
 import 'screens/select_user_type_screen.dart';
 import 'screens/member_home_screen.dart';
+import 'screens/trainer_home_screen.dart';
 import 'services/auth_service.dart';
 import 'services/api_services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,10 +15,10 @@ import 'dart:io' show Platform;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     await Firebase.initializeApp();
-    
+
     if (kDebugMode) {
       String host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
@@ -54,7 +55,7 @@ Future<void> setupFCM(ApiService apiService) async {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
-      
+
       String? token = await messaging.getToken();
       if (token != null) {
         try {
@@ -77,7 +78,8 @@ Future<void> setupFCM(ApiService apiService) async {
         print('Message data: ${message.data}');
 
         if (message.notification != null) {
-          print('Message also contained a notification: ${message.notification}');
+          print(
+              'Message also contained a notification: ${message.notification}');
         }
       });
     } else {
@@ -110,7 +112,8 @@ class MyApp extends StatelessWidget {
         home: const AuthWrapper(),
         routes: {
           '/select_user_type': (context) => const SelectUserTypeScreen(),
-          '/home': (context) => const MemberHomeScreen(),
+          '/member_home': (context) => const MemberHomeScreen(),
+          '/trainer_home': (context) => const TrainerHomeScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/sign_up') {
@@ -132,7 +135,7 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<AuthService>(context);
+    final authService = Provider.of<AuthService>(context, listen: false);
 
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -141,7 +144,25 @@ class AuthWrapper extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasData) {
-          return const MemberHomeScreen(); // Show home screen if user is logged in
+          return FutureBuilder<Map<String, dynamic>>(
+            future: authService.getCurrentUserInfo(),
+            builder: (context, userInfoSnapshot) {
+              if (userInfoSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (userInfoSnapshot.hasData) {
+                final userRole = userInfoSnapshot.data!['role'];
+                if (userRole == 'member') {
+                  return const MemberHomeScreen();
+                } else if (userRole == 'trainer') {
+                  return const TrainerHomeScreen();
+                }
+              }
+              // If we can't determine the role, log out the user and show the login screen
+              authService.signOut();
+              return const LoginScreen();
+            },
+          );
         }
         return const LoginScreen(); // Show login screen if user is not logged in
       },

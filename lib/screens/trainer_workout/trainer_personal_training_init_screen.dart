@@ -2,37 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
-import '../widgets/custom_card.dart';
-import '../widgets/background.dart';
-import '../services/api_services.dart';
-import '../services/schemas.dart';
-import 'add_workout_screen.dart';
-import 'workout_execution_screen.dart';
+import '../../widgets/animated_inkwell.dart';
+import '../../widgets/custom_back_button.dart';
+import '../../widgets/custom_card.dart';
+import '../../widgets/background.dart';
+import '../../services/api_services.dart';
+import '../../services/schemas.dart';
+import 'trainer_personal_training_add_workout_screen.dart';
+import 'trainer_personal_training_execution_screen.dart';
 
-class CustomWorkoutInitScreen extends StatefulWidget {
+class TrainerPersonalTrainingInitScreen extends StatefulWidget {
   final ApiService apiService;
-  final int workoutType;
-  final String? memberUid;
-  final String? memberName;
+  final String memberUid;
+  final String memberName;
+  final String trainerUid;
 
-  const CustomWorkoutInitScreen({
+  const TrainerPersonalTrainingInitScreen({
     super.key,
     required this.apiService,
-    required this.workoutType,
-    this.memberUid,
-    this.memberName,
+    required this.memberUid,
+    required this.memberName,
+    required this.trainerUid, 
   });
 
   @override
-  _CustomWorkoutInitScreenState createState() =>
-      _CustomWorkoutInitScreenState();
+  _TrainerPersonalTrainingInitScreenState createState() =>
+      _TrainerPersonalTrainingInitScreenState();
 }
 
-class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
+class _TrainerPersonalTrainingInitScreenState
+    extends State<TrainerPersonalTrainingInitScreen> {
   List<WorkoutInfo> _sessionPlan = [];
   final Set<String> _removingItems = {};
+
+  final Color _themeColor = const Color(0xFF6EB6FF);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,7 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
         children: [
           Background(
             height: MediaQuery.of(context).size.height,
-            colors: const [Color(0xFF6F42C1), Colors.white],
+            colors: const [Color(0xFF6EB6FF), Colors.white],
             stops: const [0.0, 0.3],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -57,12 +60,26 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
                     children: [
                       const CustomBackButton(),
                       const SizedBox(width: 8),
-                      Text(
-                        'Create Workout',
-                        style: GoogleFonts.lato(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Create Personal Training',
+                              style: GoogleFonts.lato(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'For ${widget.memberName}',
+                              style: GoogleFonts.lato(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -86,7 +103,7 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
                     ),
                   ),
                 ),
-                _buildCreateSessionButton(),
+                _buildStartTrainingButton(),
               ],
             ),
           ),
@@ -101,7 +118,7 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
       titleColor: Colors.black,
       titleFontSize: 21,
       trailing: IconButton(
-        icon: const Icon(Icons.add, color: Color(0xFF6F42C1)),
+        icon: const Icon(Icons.add, color: Color(0xFF6EB6FF)),
         onPressed: _navigateToAddWorkout,
         tooltip: 'Add workout',
       ),
@@ -204,21 +221,20 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     );
   }
 
-  Widget _buildCreateSessionButton() {
+  Widget _buildStartTrainingButton() {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: AnimatedInkWell(
-        onTap: _sessionPlan.isNotEmpty ? _navigateToWorkoutExecution : null,
+        onTap: _sessionPlan.isNotEmpty ? _navigateToExecutionScreen : null,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color:
-                _sessionPlan.isNotEmpty ? const Color(0xFF6F42C1) : Colors.grey,
+            color: _sessionPlan.isNotEmpty ? _themeColor : Colors.grey,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            'Create Session',
+            'Start Training',
             textAlign: TextAlign.center,
             style: GoogleFonts.lato(
               fontSize: 18,
@@ -235,10 +251,9 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddWorkoutScreen(
+        builder: (context) => TrainerPersonalTrainingAddWorkoutScreen(
           apiService: widget.apiService,
           initialSessionPlan: _sessionPlan,
-          workoutType: widget.workoutType,
         ),
       ),
     );
@@ -264,30 +279,23 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     HapticFeedback.lightImpact();
   }
 
-  void _navigateToWorkoutExecution() async {
+  void _navigateToExecutionScreen() async {
     try {
-      if (kDebugMode) {
-        print(
-            'Creating session with workoutType: ${widget.workoutType}, memberUid: ${widget.memberUid}');
-      }
-
       final sessionIDMap = await widget.apiService.createSession(
-        widget.workoutType,
+        3, // Personal training session type
         memberUid: widget.memberUid,
       );
-
-      if (kDebugMode) {
-        print('Session created successfully: $sessionIDMap');
-      }
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => WorkoutExecutionScreen(
+          builder: (context) => TrainerPersonalTrainingExecutionScreen(
             sessionPlan: _sessionPlan,
-            workoutType: widget.workoutType,
             apiService: widget.apiService,
             sessionIDMap: sessionIDMap,
+            trainerUid: widget.trainerUid,  // 수정: 직접 전달받은 trainerUid 사용
+            memberUid: widget.memberUid,
+            memberName: widget.memberName,
           ),
         ),
       );

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/animated_inkwell.dart';
-import '../widgets/custom_back_button.dart';
-import '../widgets/custom_card.dart';
-import '../services/api_services.dart';
-import 'custom_workout_init.dart';
+import '../../widgets/animated_inkwell.dart';
+import '../../widgets/custom_back_button.dart';
+import '../../widgets/custom_card.dart';
+import '../../services/api_services.dart';
+import 'trainer_personal_training_init_screen.dart';
 
 class TrainerWorkoutInitScreen extends StatefulWidget {
   final ApiService apiService;
+  final String trainerUid; // 추가
 
-  const TrainerWorkoutInitScreen({super.key, required this.apiService});
+  const TrainerWorkoutInitScreen({
+    super.key,
+    required this.apiService,
+    required this.trainerUid, // 추가
+  });
 
   @override
   _TrainerWorkoutInitScreenState createState() =>
@@ -17,7 +22,7 @@ class TrainerWorkoutInitScreen extends StatefulWidget {
 }
 
 class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
-  final Color _backgroundColor = const Color(0xFF6F42C1);
+  final Color _backgroundColor = const Color(0xFF6EB6FF);
   String _selectedMember = '';
   List<Map<String, dynamic>> _members = [];
 
@@ -36,7 +41,30 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
       });
     } catch (e) {
       print('Error fetching members: $e');
-      // Consider showing an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load members: $e')),
+      );
+    }
+  }
+
+  void _navigateToPersonalTrainingInit() {
+    if (_selectedMember.isNotEmpty) {
+      final selectedMemberInfo =
+          _members.firstWhere((member) => member['uid'] == _selectedMember);
+      final memberName =
+          '${selectedMemberInfo['member_first_name']} ${selectedMemberInfo['member_last_name']}';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TrainerPersonalTrainingInitScreen(
+            apiService: widget.apiService,
+            memberUid: _selectedMember,
+            memberName: memberName,
+            trainerUid: widget.trainerUid, // 추가: trainerUid 전달
+          ),
+        ),
+      );
     }
   }
 
@@ -111,7 +139,7 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
                             const SizedBox(height: 40),
                             AnimatedInkWell(
                               onTap: _selectedMember.isNotEmpty
-                                  ? _navigateToCustomWorkout
+                                  ? _navigateToPersonalTrainingInit
                                   : null,
                               child: Container(
                                 width: double.infinity,
@@ -119,7 +147,7 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
                                     const EdgeInsets.symmetric(vertical: 15),
                                 decoration: BoxDecoration(
                                   color: _selectedMember.isNotEmpty
-                                      ? const Color(0xFF6F42C1)
+                                      ? const Color(0xFF6EB6FF)
                                       : Colors.grey,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -162,12 +190,12 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: _selectedMember == member['uid']
-              ? const Color(0xFF6F42C1).withOpacity(0.1)
+              ? const Color(0xFF6EB6FF).withOpacity(0.1)
               : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: _selectedMember == member['uid']
-                ? const Color(0xFF6F42C1)
+                ? const Color(0xFF6EB6FF)
                 : Colors.grey.shade300,
             width: 2,
           ),
@@ -175,7 +203,7 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: const Color(0xFF6F42C1),
+              backgroundColor: const Color(0xFF6EB6FF),
               child: Text(
                 fullName.split(' ').map((e) => e[0]).join('').toUpperCase(),
                 style: GoogleFonts.lato(
@@ -197,7 +225,7 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
             ),
             if (_selectedMember == member['uid'])
               const Icon(Icons.check_circle,
-                  color: Color(0xFF6F42C1), size: 24),
+                  color: Color(0xFF6EB6FF), size: 24),
           ],
         ),
       ),
@@ -230,23 +258,6 @@ class _TrainerWorkoutInitScreenState extends State<TrainerWorkoutInitScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _navigateToCustomWorkout() {
-    final selectedMemberInfo =
-        _members.firstWhere((member) => member['uid'] == _selectedMember);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CustomWorkoutInitScreen(
-          apiService: widget.apiService,
-          workoutType: 3,
-          memberUid: _selectedMember, // 여기서 선택된 멤버의 UID를 전달
-          memberName:
-              '${selectedMemberInfo['member_first_name']} ${selectedMemberInfo['member_last_name']}',
         ),
       ),
     );

@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CustomCard extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
+  final String? title;
+  final List<Widget>? children;
+  final Widget? child;
   final Color titleColor;
   final double titleFontSize;
   final Widget? trailing;
 
   const CustomCard({
-    super.key,
-    required this.title,
-    required this.children,
+    Key? key,
+    this.title,
+    this.children,
+    this.child,
     this.titleColor = Colors.black,
     this.titleFontSize = 20,
     this.trailing,
-  });
+  }) : assert(children == null || child == null, 'Cannot provide both children and child'),
+       super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,26 +37,32 @@ class CustomCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.lato(
-                    fontSize: titleFontSize,
-                    fontWeight: FontWeight.bold,
-                    color: titleColor,
-                  ),
-                ),
-                if (trailing != null) trailing!,
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...children,
+            if (title != null || trailing != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (title != null)
+                    Text(
+                      title!,
+                      style: GoogleFonts.lato(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: titleColor,
+                      ),
+                    ),
+                  if (trailing != null) trailing!,
+                ],
+              ),
+            if (title != null || trailing != null)
+              const SizedBox(height: 12),
+            if (child != null)
+              child!
+            else if (children != null)
+              ...children!,
           ],
         ),
       ),

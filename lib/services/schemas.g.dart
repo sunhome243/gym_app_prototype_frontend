@@ -9,7 +9,7 @@ part of 'schemas.dart';
 SessionWithSets _$SessionWithSetsFromJson(Map<String, dynamic> json) =>
     SessionWithSets(
       session_id: (json['session_id'] as num).toInt(),
-      workout_date: DateTime.parse(json['workout_date'] as String),
+      workout_date: json['workout_date'] as String? ?? '',
       member_uid: json['member_uid'] as String,
       trainer_uid: json['trainer_uid'] as String?,
       is_pt: json['is_pt'] as bool,
@@ -22,7 +22,7 @@ SessionWithSets _$SessionWithSetsFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$SessionWithSetsToJson(SessionWithSets instance) =>
     <String, dynamic>{
       'session_id': instance.session_id,
-      'workout_date': instance.workout_date.toIso8601String(),
+      'workout_date': instance.workout_date,
       'member_uid': instance.member_uid,
       'trainer_uid': instance.trainer_uid,
       'is_pt': instance.is_pt,

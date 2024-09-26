@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/custom_back_button.dart';
-import '../widgets/background.dart';
-import '../services/api_services.dart';
-import '../services/schemas.dart';
-import 'add_workout_screen.dart';
+import '../../widgets/custom_back_button.dart';
+import '../../widgets/background.dart';
+import '../../services/api_services.dart';
+import '../../services/schemas.dart';
+import '../add_workout_screen.dart';
 
 class ReviewSessionPlanScreen extends StatefulWidget {
   final List<WorkoutInfo> sessionPlan;
