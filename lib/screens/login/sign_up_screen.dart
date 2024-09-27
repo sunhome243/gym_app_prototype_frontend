@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '/services/auth_service.dart';
 import 'login_screen.dart';
 import 'package:provider/provider.dart';
-import '../widgets/custom_back_button.dart';
+import '../../widgets/custom_back_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String userType;

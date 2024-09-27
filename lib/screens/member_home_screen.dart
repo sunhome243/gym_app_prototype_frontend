@@ -14,6 +14,7 @@ import 'member_workout/member_workout_init_screen.dart';
 import 'workout_info_screen.dart';
 import 'package:intl/intl.dart';
 import '../services/schemas.dart';
+import 'package:flutter/foundation.dart';
 
 class MemberHomeScreen extends StatefulWidget {
   const MemberHomeScreen({super.key});
@@ -63,13 +64,20 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
       final sessions = await apiService.getSessions();
-      setState(() {
-        _recentSessions = sessions
-          ..sort((a, b) => b.workout_date.compareTo(a.workout_date));
-      });
+      sessions.sort((a, b) => b.workout_date.compareTo(a.workout_date));
+      if (!listEquals(_recentSessions, sessions)) {
+        setState(() {
+          _recentSessions = sessions;
+        });
+      }
     } catch (e) {
       print('Error fetching recent sessions: $e');
     }
+  }
+
+  Future<void> refreshRecentSessions() async {
+    await _fetchRecentSessions();
+    setState(() {}); // UI 업데이트를 트리거합니다.
   }
 
   @override
@@ -146,12 +154,12 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
               _buildQuickActions(),
               SizedBox(height: constraints.maxHeight * 0.02),
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: _buildWorkoutSummaryCard(),
               ),
               SizedBox(height: constraints.maxHeight * 0.02),
               Expanded(
-                flex: 4,
+                flex: 3,
                 child: _buildRecentSessionsCard(),
               ),
               SizedBox(height: constraints.maxHeight * 0.02),
@@ -172,7 +180,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
         Text(
           greeting,
           style: GoogleFonts.lato(
-            fontSize: 32,
+            fontSize: 30,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
@@ -180,7 +188,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
         Text(
           firstName,
           style: GoogleFonts.lato(
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: FontWeight.w500,
             color: Colors.black.withOpacity(0.9),
           ),
@@ -267,16 +275,18 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     return CustomCard(
       title: "This Week's Progress",
       titleColor: Colors.black,
-      titleFontSize: 18,
+      titleFontSize: 17,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildProgressItem('Workouts', '4/5', Icons.fitness_center),
+              _buildProgressDivider(),
               _buildProgressItem(
                   'Calories', '1,200', Icons.local_fire_department),
+              _buildProgressDivider(),
               _buildProgressItem('Time', '3h 45m', Icons.timer),
             ],
           ),
@@ -290,7 +300,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: const Color(0xFF4CD964), size: 24),
-        const SizedBox(height: 7),
+        const SizedBox(height: 6),
         Text(
           value,
           style: GoogleFonts.lato(
@@ -299,7 +309,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
             color: Colors.black,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           label,
           style: GoogleFonts.lato(
@@ -311,47 +321,97 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     );
   }
 
+  Widget _buildProgressDivider() {
+    return Container(
+      height: 40,
+      width: 1,
+      color: Colors.grey.withOpacity(0.3),
+    );
+  }
+
   Widget _buildRecentSessionsCard() {
     return CustomCard(
       title: 'Recent Sessions',
       titleColor: Colors.black,
-      titleFontSize: 18,
+      titleFontSize: 17,
       trailing: GestureDetector(
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AllSessionsScreen()),
+            MaterialPageRoute(
+                builder: (context) => AllSessionsScreen(
+                    refreshRecentSessions: refreshRecentSessions)),
           );
         },
-        child: Text(
-          'See All',
-          style: GoogleFonts.lato(
-            color: const Color(0xFF4CD964),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: const Icon(Icons.arrow_forward_ios,
+            color: Color(0xFF4CD964), size: 17),
       ),
       children: [
-        FutureBuilder<List<SessionWithSets>>(
-          future: Provider.of<ApiService>(context, listen: false).getSessions(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No recent sessions'));
-            } else {
-              final recentSessions = snapshot.data!.take(2).toList();
-              return Column(
-                children: recentSessions
-                    .map((session) => _buildSessionItem(session))
-                    .toList(),
-              );
-            }
-          },
+        SizedBox(
+          height: 150,
+          child: FutureBuilder<List<SessionWithSets>>(
+            future:
+                Provider.of<ApiService>(context, listen: false).getSessions(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return _buildNoSessionsWidget();
+              } else {
+                final recentSessions = snapshot.data!.take(2).toList();
+                return ListView.separated(
+                  padding: EdgeInsets.zero,
+                  itemCount: recentSessions.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1, color: Colors.grey),
+                  itemBuilder: (context, index) {
+                    return _buildSessionItem(recentSessions[index]);
+                  },
+                );
+              }
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildNoSessionsWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.fitness_center,
+              size: 48,
+              color: Color(0xFF4CD964),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "No sessions yet",
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Start your fitness journey today!",
+              style: GoogleFonts.lato(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -378,7 +438,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
     if (session.workout_date.isNotEmpty) {
       try {
         DateTime dateTime = DateTime.parse(session.workout_date);
-        formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+        formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(dateTime);
       } catch (e) {
         print('Error parsing date: ${e.toString()}');
         formattedDate = 'Invalid date';
@@ -390,10 +450,10 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(iconData, color: iconColor, size: 24),
           ),
@@ -409,11 +469,11 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   formattedDate,
                   style: GoogleFonts.lato(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Colors.grey[600],
                   ),
                 ),
@@ -432,7 +492,10 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
         Navigator.of(context).push(
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                MemberWorkoutInitScreen(apiService: apiService),
+                MemberWorkoutInitScreen(
+              apiService: apiService,
+              refreshRecentSessions: refreshRecentSessions, // 여기에 추가
+            ),
             transitionDuration: Duration.zero, // Instantly transition
           ),
         );

@@ -13,6 +13,7 @@ class WorkoutSummaryScreen extends StatefulWidget {
   final SessionIDMap sessionIDMap;
   final ApiService apiService;
   final VoidCallback onEndSession;
+  final Function refreshRecentSessions;
 
   const WorkoutSummaryScreen({
     super.key,
@@ -21,6 +22,7 @@ class WorkoutSummaryScreen extends StatefulWidget {
     required this.sessionIDMap,
     required this.apiService,
     required this.onEndSession,
+    required this.refreshRecentSessions,
   });
 
   @override
@@ -277,6 +279,7 @@ class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> {
               backgroundColor: Colors.green),
         );
         HapticFeedback.mediumImpact();
+        await widget.refreshRecentSessions(); // 최근 세션 새로고침
         widget.onEndSession();
       }
     } catch (e) {

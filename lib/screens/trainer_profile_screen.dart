@@ -11,7 +11,7 @@ import '../widgets/profile_header.dart';
 import '../widgets/custom_card.dart';
 import 'update_trainer_personal_info_screen.dart';
 import 'trainer_home_screen.dart';
-import 'login_screen.dart';
+import 'login/login_screen.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   const TrainerProfileScreen({super.key});

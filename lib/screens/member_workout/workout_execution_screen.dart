@@ -9,19 +9,22 @@ import '../../services/schemas.dart';
 import 'dart:async';
 import 'review_session_plan_screen.dart';
 import 'workout_summary_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class WorkoutExecutionScreen extends StatefulWidget {
   final List<WorkoutInfo> sessionPlan;
   final int workoutType;
   final ApiService apiService;
-  final SessionIDMap sessionIDMap;
+  final String? memberUid;
+  final Function refreshRecentSessions;
 
   const WorkoutExecutionScreen({
     super.key,
     required this.sessionPlan,
     required this.workoutType,
     required this.apiService,
-    required this.sessionIDMap,
+    this.memberUid,
+    required this.refreshRecentSessions, 
   });
 
   @override
@@ -117,8 +120,7 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
     try {
       final sessionTypeId = widget.workoutType;
       final workoutKeys = _sessionPlan.map((w) => w.workout_key).toList();
-      _currentSession =
-          await widget.apiService.createSession(sessionTypeId);
+      _currentSession = await widget.apiService.createSession(sessionTypeId);
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -204,22 +206,23 @@ class _WorkoutExecutionScreenState extends State<WorkoutExecutionScreen>
     });
   }
 
-Future<void> _saveSession() async {
-  Navigator.of(context).pushReplacement(
-    MaterialPageRoute(
-      builder: (context) => WorkoutSummaryScreen(
-        completedExercises: _completedExercises,
-        workoutType: widget.workoutType,
-        sessionIDMap: _currentSession!,
-        apiService: widget.apiService,
-        onEndSession: () {
-          // Navigate back to the home screen
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        },
+  Future<void> _saveSession() async {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => WorkoutSummaryScreen(
+          completedExercises: _completedExercises,
+          workoutType: widget.workoutType,
+          sessionIDMap: _currentSession!,
+          apiService: widget.apiService,
+          onEndSession: () {
+            widget.refreshRecentSessions();  // 여기에서 호출
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+          refreshRecentSessions: widget.refreshRecentSessions,  // 여기에서 전달
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _openReviewSessionPlan() async {
     final result = await Navigator.push(

@@ -11,6 +11,7 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/quick_action_button.dart';
 import '../widgets/custom_card.dart';
 import '../widgets/skeleton_ui_widgets.dart';
+import 'trainer_member_all_sessions_screen.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
   const TrainerHomeScreen({super.key});
@@ -25,12 +26,30 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
   List<dynamic> _members = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  int _sessionsToday = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchTrainerInfo();
     _fetchMembers();
+    _fetchSessionsToday();
+  }
+
+  Future<void> _fetchSessionsToday() async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final sessions = await apiService.getTrainerMemberSessions();
+      final today = DateTime.now().toLocal().toString().split(' ')[0];
+      final sessionsToday = sessions
+          .where((session) => session.workout_date.startsWith(today))
+          .length;
+      setState(() {
+        _sessionsToday = sessionsToday;
+      });
+    } catch (e) {
+      print('Error fetching sessions today: $e');
+    }
   }
 
   Future<void> _fetchTrainerInfo() async {
@@ -64,6 +83,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     } catch (e) {
       print('Error fetching members with sessions: $e');
     }
+  }
+
+  void _updateSessionsToday(int count) {
+    setState(() {
+      _sessionsToday = count;
+    });
   }
 
   @override
@@ -130,27 +155,28 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
   Widget _buildContent() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 3, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGreeting(),
-              SizedBox(height: constraints.maxHeight * 0.02),
-              _buildQuickActions(),
-              SizedBox(height: constraints.maxHeight * 0.02),
-              Expanded(
-                flex: 3,
-                child: _buildMyMembersCard(),
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGreeting(),
+                    SizedBox(height: constraints.maxHeight * 0.02),
+                    _buildQuickActions(),
+                    SizedBox(height: constraints.maxHeight * 0.02),
+                    _buildMyMembersCard(constraints),
+                    SizedBox(height: constraints.maxHeight * 0.02),
+                    _buildMembersProgressCard(),
+                    SizedBox(height: constraints.maxHeight * 0.03),
+                    _buildStartSessionButton(),
+                  ],
+                ),
               ),
-              SizedBox(height: constraints.maxHeight * 0.02),
-              Expanded(
-                flex: 4,
-                child: _buildMembersProgressCard(),
-              ),
-              SizedBox(height: constraints.maxHeight * 0.02),
-              _buildStartSessionButton(),
-            ],
+            ),
           ),
         );
       },
@@ -242,200 +268,237 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             // TODO: Navigate to Schedule management screen
           },
         ),
+        QuickActionButton(
+          icon: Icons.list,
+          label: 'All Sessions',
+          iconColor: const Color(0xFF6EB6FF),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TrainerMemberAllSessionsScreen(
+                  refreshHomeScreen: _updateSessionsToday,
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildMyMembersCard() {
+  Widget _buildMyMembersCard(BoxConstraints constraints) {
     return CustomCard(
       title: "My Members",
       titleColor: Colors.black,
       titleFontSize: 18,
+      trailing: GestureDetector(
+        onTap: () {
+          // TODO: Navigate to full members list
+        },
+        child: const Icon(Icons.arrow_forward_ios,
+            color: Color(0xFF6EB6FF), size: 20),
+      ),
       children: [
-        const SizedBox(height: 0),
         SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _members.length + 1,
-            itemBuilder: (context, index) {
-              if (index < _members.length) {
-                return _buildMemberAvatar(_members[index]);
-              } else {
-                return _buildAddMemberButton();
-              }
-            },
+          height: constraints.maxHeight * 0.12,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: _buildMemberAvatars(),
           ),
         ),
       ],
     );
   }
 
+  List<Widget> _buildMemberAvatars() {
+    List<Widget> avatars = [];
+
+    if (_members.isEmpty) {
+      avatars.add(_buildAddMemberButton());
+    } else if (_members.length <= 3) {
+      for (var member in _members) {
+        avatars.add(Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: _buildMemberAvatar(member),
+        ));
+      }
+      avatars.add(_buildAddMemberButton());
+    } else {
+      for (int i = 0; i < 3; i++) {
+        avatars.add(Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: _buildMemberAvatar(_members[i]),
+        ));
+      }
+      avatars.add(Padding(
+        padding: const EdgeInsets.only(right: 15),
+        child: _buildMoreMembersIndicator(),
+      ));
+      avatars.add(_buildAddMemberButton());
+    }
+
+    return avatars;
+  }
+
   Widget _buildMemberAvatar(dynamic member) {
     final bool isPending = member['status'] == 'pending';
-    final bool isRequestor = member['requester_uid'] == _trainerInfo?['uid'];
     final bool isAccepted = member['status'] == 'accepted';
     final int remainingSessions = member['remaining_sessions'] ?? 0;
 
-    String statusText;
-    Color statusColor;
-
+    Color statusColor = const Color(0xFF81C784); // 기본 초록색
     if (isPending) {
-      statusText = isRequestor ? 'Sent' : 'Received';
-      statusColor = const Color(0xFFE53935);
-    } else if (isAccepted) {
-      if (remainingSessions <= 3) {
-        statusText = 'Critical';
-        statusColor = Colors.red;
-      } else if (remainingSessions <= 5) {
-        statusText = 'Low';
-        statusColor = Colors.orange;
-      } else {
-        statusText = 'All Set';
-        statusColor = const Color(0xFF81C784);
-      }
-    } else {
-      statusText = '';
-      statusColor = Colors.transparent;
+      statusColor = Colors.grey;
+    } else if (isAccepted && remainingSessions <= 3) {
+      statusColor = Colors.red;
+    } else if (isAccepted && remainingSessions <= 5) {
+      statusColor = Colors.orange;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: AnimatedInkWell(
-        onTap: () {
-          if (isPending && !isRequestor) {
-            _showApprovalModal(member);
-          } else if (isAccepted) {
-            // TODO: Navigate to member profile page
-          }
-        },
-        onLongPress: (Offset tapPosition) {
-          _showDeleteMenu(context, member, tapPosition);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF6EB6FF),
-                        const Color(0xFF6EB6FF).withOpacity(0.7),
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${member['member_first_name'][0]}${member['member_last_name'][0]}',
-                      style: GoogleFonts.lato(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                if (statusText.isNotEmpty)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: Text(
-                        remainingSessions.toString(),
-                        style: GoogleFonts.lato(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${member['member_first_name']}',
-              style: GoogleFonts.lato(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              statusText,
-              style: GoogleFonts.lato(
-                fontSize: 10,
-                color: statusColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddMemberButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: AnimatedInkWell(
-        onTap: _showAddMemberModal,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
           children: [
             Container(
               width: 50,
               height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6EB6FF).withOpacity(0.1),
-                border: Border.all(
-                  color: const Color(0xFF6EB6FF),
-                  width: 1.5,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    isPending ? Colors.grey : const Color(0xFF6EB6FF),
+                    isPending
+                        ? Colors.grey.withOpacity(0.7)
+                        : const Color(0xFF6EB6FF).withOpacity(0.7),
+                  ],
                 ),
               ),
-              child: const Icon(
-                Icons.add,
-                color: Color(0xFF6EB6FF),
-                size: 24,
+              child: Center(
+                child: Text(
+                  '${member['member_first_name'][0]}${member['member_last_name'][0]}',
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Add',
+            if (isPending)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey, width: 2),
+                  ),
+                  child: const Icon(Icons.hourglass_empty,
+                      size: 12, color: Colors.grey),
+                ),
+              )
+            else
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 15,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          member['member_first_name'],
+          style: GoogleFonts.lato(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMoreMembersIndicator() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: const Color(0xFF6EB6FF).withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '+${_members.length - 3}',
               style: GoogleFonts.lato(
-                fontSize: 12,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF6EB6FF),
               ),
             ),
-            Text(
-              'Member',
-              style: GoogleFonts.lato(
-                fontSize: 10,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'More',
+          style: GoogleFonts.lato(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF6EB6FF),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddMemberButton() {
+    return GestureDetector(
+      onTap: _showAddMemberModal,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF6EB6FF).withOpacity(0.1),
+              border: Border.all(
                 color: const Color(0xFF6EB6FF),
+                width: 2,
               ),
             ),
-          ],
-        ),
+            child: const Icon(
+              Icons.add,
+              color: Color(0xFF6EB6FF),
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Add',
+            style: GoogleFonts.lato(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6EB6FF),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -445,23 +508,35 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
       title: "Members' Progress",
       titleColor: Colors.black,
       titleFontSize: 18,
-      trailing: AnimatedInkWell(
+      trailing: GestureDetector(
         onTap: () {
-          // TODO: Navigate to detailed progress screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TrainerMemberAllSessionsScreen(
+                refreshHomeScreen: _updateSessionsToday,
+              ),
+            ),
+          );
         },
-        child:
-            const Icon(Icons.arrow_forward, color: Color(0xFF6EB6FF), size: 24),
+        child: const Icon(Icons.arrow_forward_ios,
+            color: Color(0xFF6EB6FF), size: 20),
       ),
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        SizedBox(
+          height: 120, // 기존 높이 유지
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildProgressItem(
-                  'Active Members', '${_members.length}', Icons.group),
-              _buildProgressItem('Sessions Today', '5', Icons.today),
-              _buildProgressItem('Avg. Progress', '75%', Icons.trending_up),
+              Expanded(
+                  child: _buildProgressItem(
+                      'Active\nMembers', '${_members.length}', Icons.group)),
+              Expanded(
+                  child: _buildProgressItem(
+                      'Sessions\nToday', '$_sessionsToday', Icons.today)),
+              Expanded(
+                  child: _buildProgressItem(
+                      'Avg.\nProgress', '75%', Icons.trending_up)),
             ],
           ),
         ),
@@ -470,28 +545,33 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
   }
 
   Widget _buildProgressItem(String label, String value, IconData icon) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: const Color(0xFF6EB6FF), size: 24),
-        const SizedBox(height: 7),
-        Text(
-          value,
-          style: GoogleFonts.lato(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8), // 좌우 패딩 추가
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: const Color(0xFF6EB6FF), size: 30), // 아이콘 크기 약간 증가
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: GoogleFonts.lato(
+              fontSize: 17, // 값 텍스트 크기 약간 증가
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.lato(
-            fontSize: 12,
-            color: Colors.grey[600],
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: GoogleFonts.lato(
+              fontSize: 11, // 레이블 텍스트 크기 유지
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -539,142 +619,62 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     );
   }
 
-  void _showDeleteMenu(
-      BuildContext context, dynamic member, Offset tapPosition) {
-    showCustomMenu(
-      context,
-      tapPosition,
-      [
-        CustomMenuItem(
-          icon: Icons.delete_outline,
-          text: 'Remove',
-          onTap: () {
-            _showDeleteConfirmationModal(context, member);
+  void _showAddMemberModal() {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController sessionsController = TextEditingController();
+
+    showCustomModal(
+      context: context,
+      title: 'Add New Member',
+      theme: CustomModalTheme.blue,
+      icon: Icons.person_add,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: emailController,
+            decoration: InputDecoration(
+              labelText: 'Member Email',
+              prefixIcon: const Icon(Icons.email, color: Color(0xFF6EB6FF)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: Color(0xFF6EB6FF), width: 2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: sessionsController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Initial Sessions',
+              prefixIcon:
+                  const Icon(Icons.fitness_center, color: Color(0xFF6EB6FF)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: Color(0xFF6EB6FF), width: 2),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        CustomModalAction(
+          text: 'Cancel',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        CustomModalAction(
+          text: 'Add Member',
+          isDefaultAction: true,
+          onPressed: () {
+            Navigator.of(context).pop();
+            _addMember(
+                emailController.text, int.parse(sessionsController.text));
           },
-          color: Colors.red,
         ),
       ],
-    );
-  }
-
-  void _showDeleteConfirmationModal(BuildContext context, dynamic member) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return CustomModal(
-          title: 'Remove Member',
-          icon: Icons.warning,
-          theme: CustomModalTheme.red,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Are you sure you want to remove ${member['member_first_name']} from your member list?',
-                style: GoogleFonts.lato(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'This action cannot be undone!',
-                style: GoogleFonts.lato(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red[700],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'Cancel',
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            CustomModalAction(
-              text: 'Remove',
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await _removeMember(member);
-              },
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _removeMember(dynamic member) async {
-    try {
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      await apiService.removeTrainerMemberMapping(member['uid']);
-      await _fetchMembers();
-      _showSuccessDialog(context, 'Member removed successfully');
-    } catch (e) {
-      _showErrorDialog(context, 'Failed to remove member: $e');
-    }
-  }
-
-  void _showAddMemberModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final TextEditingController emailController = TextEditingController();
-        final TextEditingController sessionsController =
-            TextEditingController();
-
-        return CustomModal(
-          title: 'Add New Member',
-          icon: Icons.person_add,
-          theme: CustomModalTheme.blue,
-          content: Column(
-            children: [
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: 'Member Email',
-                  prefixIcon: const Icon(Icons.email, color: Color(0xFF6EB6FF)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF6EB6FF), width: 2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: sessionsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Initial Sessions',
-                  prefixIcon: const Icon(Icons.fitness_center,
-                      color: Color(0xFF6EB6FF)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF6EB6FF), width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'Cancel',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            CustomModalAction(
-              text: 'Add Member',
-              onPressed: () {
-                Navigator.of(context).pop();
-                _addMember(
-                    emailController.text, int.parse(sessionsController.text));
-              },
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -748,62 +748,6 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             CustomModalAction(
               text: 'OK',
               onPressed: () => Navigator.of(dialogContext).pop(),
-              isDefaultAction: true,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showApprovalModal(dynamic member) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return CustomModal(
-          title: 'New Member Request',
-          icon: Icons.person_add,
-          theme: CustomModalTheme.blue,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${member['member_first_name']} ${member['member_last_name']} wants to join your fitness squad!',
-                style: GoogleFonts.lato(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Ready to welcome them to the gains train?',
-                style: GoogleFonts.lato(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            CustomModalAction(
-              text: 'Not Now',
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            CustomModalAction(
-              text: 'Accept',
-              onPressed: () async {
-                final apiService =
-                    Provider.of<ApiService>(context, listen: false);
-                if (member['mapping_id'] != null) {
-                  await apiService.updateTrainerMemberMappingStatus(
-                      member['mapping_id'], 'accepted');
-                  Navigator.of(dialogContext).pop();
-                  _fetchMembers();
-                  _showSuccessDialog(context, 'New member added successfully!');
-                } else {
-                  _showErrorDialog(
-                      context, 'An error occurred. Please try again.');
-                }
-              },
               isDefaultAction: true,
             ),
           ],

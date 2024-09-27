@@ -159,3 +159,63 @@ Map<String, dynamic> _$SessionSaveResponseToJson(
       'session_type_id': instance.session_type_id,
       'quest_id': instance.quest_id,
     };
+
+SessionDetail _$SessionDetailFromJson(Map<String, dynamic> json) =>
+    SessionDetail(
+      session_id: (json['session_id'] as num).toInt(),
+      workout_date: DateTime.parse(json['workout_date'] as String),
+      member_uid: json['member_uid'] as String,
+      trainer_uid: json['trainer_uid'] as String?,
+      trainer_name: json['trainer_name'] as String?,
+      is_pt: json['is_pt'] as bool,
+      session_type_id: (json['session_type_id'] as num).toInt(),
+      session_type: json['session_type'] as String,
+      workouts: (json['workouts'] as List<dynamic>)
+          .map((e) => WorkoutDetail.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$SessionDetailToJson(SessionDetail instance) =>
+    <String, dynamic>{
+      'session_id': instance.session_id,
+      'workout_date': instance.workout_date.toIso8601String(),
+      'member_uid': instance.member_uid,
+      'trainer_uid': instance.trainer_uid,
+      'trainer_name': instance.trainer_name,
+      'is_pt': instance.is_pt,
+      'session_type_id': instance.session_type_id,
+      'session_type': instance.session_type,
+      'workouts': instance.workouts,
+    };
+
+WorkoutDetail _$WorkoutDetailFromJson(Map<String, dynamic> json) =>
+    WorkoutDetail(
+      workout_key: (json['workout_key'] as num).toInt(),
+      workout_name: json['workout_name'] as String,
+      workout_part: json['workout_part'] as String,
+      sets: (json['sets'] as List<dynamic>)
+          .map((e) => SetDetail.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$WorkoutDetailToJson(WorkoutDetail instance) =>
+    <String, dynamic>{
+      'workout_key': instance.workout_key,
+      'workout_name': instance.workout_name,
+      'workout_part': instance.workout_part,
+      'sets': instance.sets,
+    };
+
+SetDetail _$SetDetailFromJson(Map<String, dynamic> json) => SetDetail(
+      set_num: (json['set_num'] as num).toInt(),
+      weight: (json['weight'] as num).toDouble(),
+      reps: (json['reps'] as num).toInt(),
+      rest_time: (json['rest_time'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$SetDetailToJson(SetDetail instance) => <String, dynamic>{
+      'set_num': instance.set_num,
+      'weight': instance.weight,
+      'reps': instance.reps,
+      'rest_time': instance.rest_time,
+    };

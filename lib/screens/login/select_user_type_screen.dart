@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'sign_up_screen.dart';
-import '../widgets/custom_back_button.dart';
+import '../../widgets/custom_back_button.dart';
 
 class SelectUserTypeScreen extends StatelessWidget {
   const SelectUserTypeScreen({super.key});

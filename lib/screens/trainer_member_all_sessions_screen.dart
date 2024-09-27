@@ -11,20 +11,27 @@ import '../widgets/background.dart';
 import 'package:shimmer/shimmer.dart';
 import 'session_summary_screen.dart';
 
-class AllSessionsScreen extends StatefulWidget {
-  const AllSessionsScreen({super.key, required this.refreshRecentSessions});
-  final Function refreshRecentSessions;
+class TrainerMemberAllSessionsScreen extends StatefulWidget {
+  const TrainerMemberAllSessionsScreen(
+      {super.key, required this.refreshHomeScreen});
+
+  final Function refreshHomeScreen;
 
   @override
-  _AllSessionsScreenState createState() => _AllSessionsScreenState();
+  _TrainerMemberAllSessionsScreenState createState() =>
+      _TrainerMemberAllSessionsScreenState();
 }
 
-class _AllSessionsScreenState extends State<AllSessionsScreen> {
+class _TrainerMemberAllSessionsScreenState
+    extends State<TrainerMemberAllSessionsScreen> {
   List<SessionWithSets> _sessions = [];
+  final Map<String, String> _memberNames = {};
   bool _isLoading = true;
   String _errorMessage = '';
   String _sortBy = 'date';
   bool _sortAscending = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,12 +47,22 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
 
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
-      final sessions = await apiService.getSessions();
+      final sessions = await apiService.getTrainerMemberSessions();
+      final memberUids = sessions.map((s) => s.member_uid).toSet().toList();
+
+      // Fetch member names
+      for (var uid in memberUids) {
+        final memberInfo = await apiService.getMemberInfoByUid(uid);
+        _memberNames[uid] =
+            '${memberInfo['first_name']} ${memberInfo['last_name']}';
+      }
+
       setState(() {
         _sessions = sessions;
-        _sortSessions();
+        _sortAndFilterSessions();
         _isLoading = false;
       });
+      _updateSessionsToday();
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -54,18 +71,51 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
     }
   }
 
-  void _sortSessions() {
+  void _sortAndFilterSessions() {
+    _sessions = _sessions.where((session) {
+      final memberName = _memberNames[session.member_uid]?.toLowerCase() ?? '';
+      final searchTerms = _searchQuery.toLowerCase().split(' ');
+      return searchTerms.every((term) => memberName.contains(term));
+    }).toList();
+
     _sessions.sort((a, b) {
-      if (_sortBy == 'date') {
-        return _sortAscending
-            ? a.workout_date.compareTo(b.workout_date)
-            : b.workout_date.compareTo(a.workout_date);
-      } else {
-        return _sortAscending
-            ? a.session_type_id.compareTo(b.session_type_id)
-            : b.session_type_id.compareTo(a.session_type_id);
+      switch (_sortBy) {
+        case 'date':
+          return _sortAscending
+              ? a.workout_date.compareTo(b.workout_date)
+              : b.workout_date.compareTo(a.workout_date);
+        case 'name':
+          return _sortAscending
+              ? (_memberNames[a.member_uid] ?? '')
+                  .compareTo(_memberNames[b.member_uid] ?? '')
+              : (_memberNames[b.member_uid] ?? '')
+                  .compareTo(_memberNames[a.member_uid] ?? '');
+        case 'type':
+          return _sortAscending
+              ? _getWorkoutType(a).compareTo(_getWorkoutType(b))
+              : _getWorkoutType(b).compareTo(_getWorkoutType(a));
+        default:
+          return 0;
       }
     });
+  }
+
+  String _getWorkoutType(SessionWithSets session) {
+    if (session.is_pt) {
+      return 'PT Session';
+    } else if (session.session_type_id == 1) {
+      return 'AI Workout';
+    } else {
+      return 'Custom Workout';
+    }
+  }
+
+  void _updateSessionsToday() {
+    final today = DateTime.now().toLocal().toString().split(' ')[0];
+    final sessionsToday = _sessions
+        .where((session) => session.workout_date.startsWith(today))
+        .length;
+    widget.refreshHomeScreen(sessionsToday);
   }
 
   @override
@@ -75,7 +125,7 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
         children: [
           Background(
             height: MediaQuery.of(context).size.height,
-            colors: const [Color(0xFF3CD687), Colors.white],
+            colors: const [Color(0xFF6EB6FF), Colors.white],
             stops: const [0.0, 0.3],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -92,15 +142,20 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
                       const CustomBackButton(),
                       const SizedBox(width: 8),
                       Text(
-                        'All Sessions',
+                        'All Member Sessions',
                         style: GoogleFonts.lato(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _buildSearchBar(),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -110,6 +165,35 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return SizedBox(
+      height: 40,
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+            _sortAndFilterSessions();
+          });
+        },
+        decoration: InputDecoration(
+          hintText: 'Search member',
+          prefixIcon: const Icon(Icons.search, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.2),
+          hintStyle: GoogleFonts.lato(color: Colors.grey),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        ),
+        style: GoogleFonts.lato(color: Colors.white),
       ),
     );
   }
@@ -173,12 +257,13 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
           value: _sortBy,
           items: [
             DropdownMenuItem(value: 'date', child: Text('Sort by Date')),
+            DropdownMenuItem(value: 'name', child: Text('Sort by Name')),
             DropdownMenuItem(value: 'type', child: Text('Sort by Type')),
           ],
           onChanged: (value) {
             setState(() {
               _sortBy = value!;
-              _sortSessions();
+              _sortAndFilterSessions();
             });
           },
         ),
@@ -188,7 +273,7 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
           onPressed: () {
             setState(() {
               _sortAscending = !_sortAscending;
-              _sortSessions();
+              _sortAndFilterSessions();
             });
           },
         ),
@@ -199,20 +284,17 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
   Widget _buildSessionCard(SessionWithSets session) {
     IconData iconData;
     Color iconColor;
-    String sessionType;
+    String sessionType = _getWorkoutType(session);
 
     if (session.is_pt) {
       iconData = Icons.person;
       iconColor = Colors.blue;
-      sessionType = 'PT Session';
     } else if (session.session_type_id == 1) {
       iconData = Icons.auto_awesome;
       iconColor = Colors.purple;
-      sessionType = 'AI Workout';
     } else {
       iconData = Icons.fitness_center;
       iconColor = Colors.green;
-      sessionType = 'Custom Workout';
     }
 
     String formattedDate = DateFormat('yyyy-MM-dd HH:mm')
@@ -220,17 +302,38 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
 
     return CustomCard(
       child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SessionSummaryScreen(
+                sessionId: session.session_id,
+                memberName:
+                    _memberNames[session.member_uid] ?? 'Unknown Member',
+              ),
+            ),
+          );
+        },
         leading: CircleAvatar(
           backgroundColor: iconColor.withOpacity(0.1),
           child: Icon(iconData, color: iconColor),
         ),
         title: Text(
-          sessionType,
+          _memberNames[session.member_uid] ?? 'Unknown Member',
           style: GoogleFonts.lato(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
-          formattedDate,
-          style: GoogleFonts.lato(color: Colors.grey[600]),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              sessionType,
+              style: GoogleFonts.lato(color: Colors.grey[600]),
+            ),
+            Text(
+              formattedDate,
+              style: GoogleFonts.lato(color: Colors.grey[600]),
+            ),
+          ],
         ),
         trailing: Text(
           '${session.sets.length} sets',
@@ -239,9 +342,6 @@ class _AllSessionsScreenState extends State<AllSessionsScreen> {
             color: Colors.grey[800],
           ),
         ),
-        onTap: () {
-          // TODO: Navigate to session details screen
-        },
       ),
     );
   }

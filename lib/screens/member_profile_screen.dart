@@ -13,7 +13,7 @@ import '../widgets/custom_card.dart';
 import 'update_member_personal_info_screen.dart';
 import 'update_member_fitness_profile_screen.dart';
 import 'member_home_screen.dart';
-import 'login_screen.dart';
+import 'login/login_screen.dart';
 
 class MemberProfileScreen extends StatefulWidget {
   const MemberProfileScreen({super.key});

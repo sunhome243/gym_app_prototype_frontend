@@ -24,10 +24,12 @@ class TrainerReviewSessionPlanScreen extends StatefulWidget {
   });
 
   @override
-  State<TrainerReviewSessionPlanScreen> createState() => _TrainerReviewSessionPlanScreenState();
+  State<TrainerReviewSessionPlanScreen> createState() =>
+      _TrainerReviewSessionPlanScreenState();
 }
 
-class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPlanScreen> {
+class _TrainerReviewSessionPlanScreenState
+    extends State<TrainerReviewSessionPlanScreen> {
   late List<WorkoutInfo> _sessionPlan;
   bool _isLoading = false;
   bool _isSaving = false;
@@ -71,7 +73,8 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: Center(child: CircularProgressIndicator(color: _themeColor)),
+              child:
+                  Center(child: CircularProgressIndicator(color: _themeColor)),
             ),
         ],
       ),
@@ -94,7 +97,7 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
                   style: GoogleFonts.lato(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
                 Text(
@@ -128,13 +131,15 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
           }
           final WorkoutInfo item = _sessionPlan.removeAt(oldIndex);
           _sessionPlan.insert(newIndex, item);
-          
+
           // Adjust currentWorkoutIndex if necessary
           if (_currentWorkoutIndex == oldIndex) {
             _currentWorkoutIndex = newIndex;
-          } else if (oldIndex < _currentWorkoutIndex && newIndex >= _currentWorkoutIndex) {
+          } else if (oldIndex < _currentWorkoutIndex &&
+              newIndex >= _currentWorkoutIndex) {
             _currentWorkoutIndex--;
-          } else if (oldIndex > _currentWorkoutIndex && newIndex <= _currentWorkoutIndex) {
+          } else if (oldIndex > _currentWorkoutIndex &&
+              newIndex <= _currentWorkoutIndex) {
             _currentWorkoutIndex++;
           }
         });
@@ -160,7 +165,8 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
       key: ValueKey(workout.workout_key),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      transform: Matrix4.translationValues(isRemoving ? -MediaQuery.of(context).size.width : 0, 0, 0),
+      transform: Matrix4.translationValues(
+          isRemoving ? -MediaQuery.of(context).size.width : 0, 0, 0),
       child: Dismissible(
         key: ValueKey(workout.workout_key),
         direction: DismissDirection.endToStart,
@@ -189,8 +195,10 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: _buildWorkoutStatusIcon(isCurrent, isCompleted, completedExercise),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: _buildWorkoutStatusIcon(
+                    isCurrent, isCompleted, completedExercise),
                 title: Text(
                   workout.workout_name,
                   style: GoogleFonts.lato(
@@ -216,17 +224,21 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
     );
   }
 
-  Widget _buildWorkoutStatusIcon(bool isCurrent, bool isCompleted, ExerciseSave completedExercise) {
+  Widget _buildWorkoutStatusIcon(
+      bool isCurrent, bool isCompleted, ExerciseSave completedExercise) {
     if (isCurrent) {
       return Icon(Icons.play_arrow, color: _themeColor, size: 24);
-    } else if (isCompleted && completedExercise.sets.length == _sessionPlan[_currentWorkoutIndex].workoutSets.length) {
+    } else if (isCompleted &&
+        completedExercise.sets.length ==
+            _sessionPlan[_currentWorkoutIndex].workoutSets.length) {
       return const Icon(Icons.check_circle, color: Colors.green, size: 24);
     } else {
       return const Icon(Icons.circle_outlined, color: Colors.grey, size: 24);
     }
   }
 
-  Widget _buildWorkoutProgress(WorkoutInfo workout, ExerciseSave completedExercise) {
+  Widget _buildWorkoutProgress(
+      WorkoutInfo workout, ExerciseSave completedExercise) {
     final completedSets = completedExercise.sets.length;
     final totalSets = workout.workoutSets.length;
     final progress = totalSets > 0 ? (completedSets / totalSets) : 0.0;
@@ -283,7 +295,8 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
             borderRadius: BorderRadius.circular(12),
           ),
           child: _isSaving
-              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white))
               : Text(
                   'Save and Return',
                   textAlign: TextAlign.center,
@@ -322,7 +335,9 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load workouts: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Failed to load workouts: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -339,9 +354,10 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
-          _sessionPlan.removeWhere((item) => item.workout_key == workout.workout_key);
+          _sessionPlan
+              .removeWhere((item) => item.workout_key == workout.workout_key);
           _removingItems.remove(workout.workout_key.toString());
-          
+
           // Adjust currentWorkoutIndex if necessary
           if (_currentWorkoutIndex >= _sessionPlan.length) {
             _currentWorkoutIndex = _sessionPlan.length - 1;
@@ -355,7 +371,8 @@ class _TrainerReviewSessionPlanScreenState extends State<TrainerReviewSessionPla
   Future<void> _saveAndReturn() async {
     setState(() => _isSaving = true);
     // Here you might want to add any save logic, e.g., API calls
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulating a save operation
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // Simulating a save operation
     if (mounted) {
       setState(() => _isSaving = false);
       Navigator.pop(context, _sessionPlan);

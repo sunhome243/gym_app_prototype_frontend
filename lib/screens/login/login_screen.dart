@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'select_user_type_screen.dart';
-import 'member_home_screen.dart';
-import 'trainer_home_screen.dart';
+import '../member_home_screen.dart';
+import '../trainer_home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {

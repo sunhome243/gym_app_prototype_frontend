@@ -118,7 +118,7 @@ class ApiService {
         print('Fetching sessions for user ID: $userId');
       }
 
-      final response = await _request('workout', 'get_sessions/$userId', 'GET');
+      final response = await _request('workout', 'sessions', 'GET');
       if (kDebugMode) {
         print('Raw API response: $response');
       }
@@ -140,11 +140,6 @@ class ApiService {
     } catch (e) {
       if (kDebugMode) {
         print('Error in getSessions: $e');
-      }
-      if (e is FormatException) {
-        if (kDebugMode) {
-          print('JSON parsing error: ${e.source}');
-        }
       }
       rethrow;
     }
@@ -330,5 +325,56 @@ class ApiService {
 
   Future<void> updateTrainer(Map<String, dynamic> trainerData) async {
     await _request('user', 'trainers/me', 'PATCH', body: trainerData);
+  }
+
+  Future<List<SessionWithSets>> getTrainerMemberSessions() async {
+    try {
+      final response =
+          await _request('workout', 'trainer/assigned-members-sessions', 'GET');
+      if (kDebugMode) {
+        print('Raw API response for trainer member sessions: $response');
+      }
+
+      if (response is List) {
+        final sessions = response
+            .map((session) => SessionWithSets.fromJson(session))
+            .toList();
+        if (kDebugMode) {
+          print('Parsed ${sessions.length} trainer member sessions');
+        }
+        return sessions;
+      } else {
+        if (kDebugMode) {
+          print('Unexpected response format: ${response.runtimeType}');
+        }
+        throw Exception('Unexpected response format: ${response.runtimeType}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in getTrainerMemberSessions: $e');
+      }
+      if (e is FormatException) {
+        if (kDebugMode) {
+          print('JSON parsing error: ${e.source}');
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getMemberInfoByUid(String uid) async {
+    return await _request('user', 'members/byuid/$uid', 'GET');
+  }
+
+  Future<SessionDetail> getSessionDetail(int sessionId) async {
+    try {
+      final response = await _request('workout', 'session/$sessionId', 'GET');
+      return SessionDetail.fromJson(response);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching session detail: $e');
+      }
+      rethrow;
+    }
   }
 }

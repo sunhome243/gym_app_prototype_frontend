@@ -194,3 +194,70 @@ class SessionSaveResponse {
       _$SessionSaveResponseFromJson(json);
   Map<String, dynamic> toJson() => _$SessionSaveResponseToJson(this);
 }
+
+@JsonSerializable()
+class SessionDetail {
+  final int session_id;
+  final DateTime workout_date;
+  final String member_uid;
+  final String? trainer_uid;
+  final String? trainer_name;  // New field
+  final bool is_pt;
+  final int session_type_id;
+  final String session_type;
+  final List<WorkoutDetail> workouts;
+
+  SessionDetail({
+    required this.session_id,
+    required this.workout_date,
+    required this.member_uid,
+    this.trainer_uid,
+    this.trainer_name,  // New field
+    required this.is_pt,
+    required this.session_type_id,
+    required this.session_type,
+    required this.workouts,
+  });
+
+  factory SessionDetail.fromJson(Map<String, dynamic> json) =>
+      _$SessionDetailFromJson(json);
+  Map<String, dynamic> toJson() => _$SessionDetailToJson(this);
+}
+
+@JsonSerializable()
+class WorkoutDetail {
+  final int workout_key;
+  final String workout_name;
+  final String workout_part;
+  final List<SetDetail> sets;
+
+  WorkoutDetail({
+    required this.workout_key,
+    required this.workout_name,
+    required this.workout_part,
+    required this.sets,
+  });
+
+  factory WorkoutDetail.fromJson(Map<String, dynamic> json) =>
+      _$WorkoutDetailFromJson(json);
+  Map<String, dynamic> toJson() => _$WorkoutDetailToJson(this);
+}
+
+@JsonSerializable()
+class SetDetail {
+  final int set_num;
+  final double weight;
+  final int reps;
+  final int rest_time;
+
+  SetDetail({
+    required this.set_num,
+    required this.weight,
+    required this.reps,
+    required this.rest_time,
+  });
+
+  factory SetDetail.fromJson(Map<String, dynamic> json) =>
+      _$SetDetailFromJson(json);
+  Map<String, dynamic> toJson() => _$SetDetailToJson(this);
+}

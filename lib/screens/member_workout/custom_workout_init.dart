@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:async';
 import '../../widgets/animated_inkwell.dart';
 import '../../widgets/custom_back_button.dart';
 import '../../widgets/custom_card.dart';
@@ -16,11 +17,13 @@ class CustomWorkoutInitScreen extends StatefulWidget {
   final int workoutType;
   final String? memberUid;
   final String? memberName;
+  final Function refreshRecentSessions;  
 
   const CustomWorkoutInitScreen({
     super.key,
     required this.apiService,
     required this.workoutType,
+    required this.refreshRecentSessions, 
     this.memberUid,
     this.memberName,
   });
@@ -33,7 +36,14 @@ class CustomWorkoutInitScreen extends StatefulWidget {
 class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
   List<WorkoutInfo> _sessionPlan = [];
   final Set<String> _removingItems = {};
-  bool _isCreatingSession = false;
+  bool _isNavigating = false;
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -209,22 +219,29 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: AnimatedInkWell(
-        onTap: (_sessionPlan.isNotEmpty && !_isCreatingSession)
-            ? _navigateToWorkoutExecution
+        onTap: (_sessionPlan.isNotEmpty && !_isNavigating)
+            ? () => _debounceNavigateToWorkoutExecution()
             : null,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color: (_sessionPlan.isNotEmpty && !_isCreatingSession)
+            color: (_sessionPlan.isNotEmpty && !_isNavigating)
                 ? const Color(0xFF6F42C1)
                 : Colors.grey,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: _isCreatingSession
-              ? const CircularProgressIndicator(color: Colors.white)
+          child: _isNavigating
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
               : Text(
-                  'Create Session',
+                  'Start Workout',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
                     fontSize: 18,
@@ -270,55 +287,47 @@ class _CustomWorkoutInitScreenState extends State<CustomWorkoutInitScreen> {
     HapticFeedback.lightImpact();
   }
 
-  Future<void> _navigateToWorkoutExecution() async {
-    // 이미 세션을 생성 중이면 리턴
-    if (_isCreatingSession) return;
+  void _debounceNavigateToWorkoutExecution() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _navigateToWorkoutExecution();
+    });
+  }
 
-    // 세션 생성 중 상태로 변경
+  Future<void> _navigateToWorkoutExecution() async {
+    if (_isNavigating) return;
+
     setState(() {
-      _isCreatingSession = true;
+      _isNavigating = true;
     });
 
     try {
-      if (kDebugMode) {
-        print(
-            'Creating session with workoutType: ${widget.workoutType}, memberUid: ${widget.memberUid}');
-      }
+      if (!mounted) return;
 
-      final sessionIDMap = await widget.apiService.createSession(
-        widget.workoutType,
-        memberUid: widget.memberUid,
-      );
-
-      if (kDebugMode) {
-        print('Session created successfully: $sessionIDMap');
-      }
-
-      if (mounted) {
-        // 새로운 화면으로 전환
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => WorkoutExecutionScreen(
-              sessionPlan: _sessionPlan,
-              workoutType: widget.workoutType,
-              apiService: widget.apiService,
-              sessionIDMap: sessionIDMap,
-            ),
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => WorkoutExecutionScreen(
+            sessionPlan: _sessionPlan,
+            workoutType: widget.workoutType,
+            apiService: widget.apiService,
+            memberUid: widget.memberUid,
+            refreshRecentSessions: widget.refreshRecentSessions,
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
-      print('Error creating session: $e');
+      if (kDebugMode) {
+        print('Error navigating to WorkoutExecutionScreen: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create session: $e')),
+          SnackBar(content: Text('Failed to start workout: $e')),
         );
       }
     } finally {
-      // 세션 생성 완료 후 상태 초기화
       if (mounted) {
         setState(() {
-          _isCreatingSession = false;
+          _isNavigating = false;
         });
       }
     }

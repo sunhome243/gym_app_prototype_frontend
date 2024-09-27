@@ -22,7 +22,7 @@ class TrainerPersonalTrainingInitScreen extends StatefulWidget {
     required this.apiService,
     required this.memberUid,
     required this.memberName,
-    required this.trainerUid, 
+    required this.trainerUid,
   });
 
   @override
@@ -34,6 +34,7 @@ class _TrainerPersonalTrainingInitScreenState
     extends State<TrainerPersonalTrainingInitScreen> {
   List<WorkoutInfo> _sessionPlan = [];
   final Set<String> _removingItems = {};
+  bool _isCreatingSession = false; // 추가: 세션 생성 중 상태
 
   final Color _themeColor = const Color(0xFF6EB6FF);
 
@@ -69,7 +70,7 @@ class _TrainerPersonalTrainingInitScreenState
                               style: GoogleFonts.lato(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Colors.black,
                               ),
                             ),
                             Text(
@@ -225,23 +226,29 @@ class _TrainerPersonalTrainingInitScreenState
     return Padding(
       padding: const EdgeInsets.all(16),
       child: AnimatedInkWell(
-        onTap: _sessionPlan.isNotEmpty ? _navigateToExecutionScreen : null,
+        onTap: (_sessionPlan.isNotEmpty && !_isCreatingSession)
+            ? _navigateToExecutionScreen
+            : null,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color: _sessionPlan.isNotEmpty ? _themeColor : Colors.grey,
+            color: (_sessionPlan.isNotEmpty && !_isCreatingSession)
+                ? _themeColor
+                : Colors.grey,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Text(
-            'Start Training',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.lato(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          child: _isCreatingSession
+              ? const CircularProgressIndicator(color: Colors.white)
+              : Text(
+                  'Start Training',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
         ),
       ),
     );
@@ -280,11 +287,19 @@ class _TrainerPersonalTrainingInitScreenState
   }
 
   void _navigateToExecutionScreen() async {
+    if (_isCreatingSession) return; // 이미 처리 중이면 무시
+
+    setState(() {
+      _isCreatingSession = true;
+    });
+
     try {
       final sessionIDMap = await widget.apiService.createSession(
         3, // Personal training session type
         memberUid: widget.memberUid,
       );
+
+      if (!mounted) return; // 위젯이 여전히 트리에 있는지 확인
 
       Navigator.push(
         context,
@@ -293,7 +308,7 @@ class _TrainerPersonalTrainingInitScreenState
             sessionPlan: _sessionPlan,
             apiService: widget.apiService,
             sessionIDMap: sessionIDMap,
-            trainerUid: widget.trainerUid,  // 수정: 직접 전달받은 trainerUid 사용
+            trainerUid: widget.trainerUid,
             memberUid: widget.memberUid,
             memberName: widget.memberName,
           ),
@@ -301,9 +316,17 @@ class _TrainerPersonalTrainingInitScreenState
       );
     } catch (e) {
       print('Error creating session: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create session: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create session: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingSession = false;
+        });
+      }
     }
   }
 }

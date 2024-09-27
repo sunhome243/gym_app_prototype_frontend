@@ -34,7 +34,8 @@ class SlidePageRoute<T> extends PageRouteBuilder<T> {
             var begin = const Offset(1.0, 0.0);
             var end = Offset.zero;
             var curve = Curves.easeInOut;
-            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
 
             return SlideTransition(
               position: animation.drive(tween),
@@ -47,11 +48,17 @@ class SlidePageRoute<T> extends PageRouteBuilder<T> {
 
 class MemberWorkoutInitScreen extends StatefulWidget {
   final ApiService apiService;
+  final Function refreshRecentSessions;
 
-  const MemberWorkoutInitScreen({super.key, required this.apiService});
+  const MemberWorkoutInitScreen({
+    super.key,
+    required this.apiService,
+    required this.refreshRecentSessions, // 새로운 매개변수 추가
+  });
 
   @override
-  _MemberWorkoutInitScreenState createState() => _MemberWorkoutInitScreenState();
+  _MemberWorkoutInitScreenState createState() =>
+      _MemberWorkoutInitScreenState();
 }
 
 class _MemberWorkoutInitScreenState extends State<MemberWorkoutInitScreen> {
@@ -181,7 +188,8 @@ class _MemberWorkoutInitScreenState extends State<MemberWorkoutInitScreen> {
     );
   }
 
-  Widget _buildSessionOption(String title, IconData icon, Color color, int workoutType) {
+  Widget _buildSessionOption(
+      String title, IconData icon, Color color, int workoutType) {
     return AnimatedInkWell(
       onTap: () {
         setState(() {
@@ -194,9 +202,8 @@ class _MemberWorkoutInitScreenState extends State<MemberWorkoutInitScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: _selectedSession == title
-              ? color.withOpacity(0.1)
-              : Colors.white,
+          color:
+              _selectedSession == title ? color.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: _selectedSession == title ? color : Colors.grey.shade300,
@@ -234,6 +241,7 @@ class _MemberWorkoutInitScreenState extends State<MemberWorkoutInitScreen> {
             page: CustomWorkoutInitScreen(
               apiService: widget.apiService,
               workoutType: _selectedWorkoutType,
+              refreshRecentSessions: widget.refreshRecentSessions,
             ),
           ),
         );
