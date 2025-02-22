@@ -55,7 +55,7 @@ I've designed the workout app on a microservices architecture, to be deployed on
 
 <table>
   <tr>
-    <td><img src="/assets/posting/final-adjusted-kubernetes-architecture-svg.png" alt="app-structure" width="400"/></td>
+    <td><img src="/assets/postings/final-adjusted-kubernetes-architecture-svg.png" alt="app-structure" width="400"/></td>
   </tr>
 </table>
 
@@ -95,60 +95,60 @@ Using Flutter, I've created a responsive and intuitive user interface. Key scree
 1. **Welcome and Signup Screens**:
    <table>
      <tr>
-       <td><img src="/assets/posting/welcome_screen.png" alt="Welcome Screen" width="200"/></td>
-       <td><img src="/assets/posting/signup.png" alt="Signup Screen" width="200"/></td>
-       <td><img src="/assets/posting/signup_member.png" alt="Member Signup" width="200"/></td>
-       <td><img src="/assets/posting/signup_trainer.png" alt="Trainer Signup" width="200"/></td>
+       <td><img src="/assets/postings/welcome_screen.png" alt="Welcome Screen" width="200"/></td>
+       <td><img src="/assets/postings/signup.png" alt="Signup Screen" width="200"/></td>
+       <td><img src="/assets/postings/signup_member.png" alt="Member Signup" width="200"/></td>
+       <td><img src="/assets/postings/signup_trainer.png" alt="Trainer Signup" width="200"/></td>
      </tr>
    </table>
 
 2. **Member Experience**:
    <table>
      <tr>
-       <td><img src="/assets/posting/member_home.png" alt="Member Home" width="200"/></td>
-       <td><img src="/assets/posting/member_profile.png" alt="Member Profile" width="200"/></td>
-       <td><img src="/assets/posting/member_manage_trainer.png" alt="Manage Trainer" width="200"/></td>
-       <td><img src="/assets/posting/member_all_session.png" alt="All Sessions" width="200"/></td>
+       <td><img src="/assets/postings/member_home.png" alt="Member Home" width="200"/></td>
+       <td><img src="/assets/postings/member_profile.png" alt="Member Profile" width="200"/></td>
+       <td><img src="/assets/postings/member_manage_trainer.png" alt="Manage Trainer" width="200"/></td>
+       <td><img src="/assets/postings/member_all_session.png" alt="All Sessions" width="200"/></td>
      </tr>
    </table>
 
 3. **Workout Experience**:
    <table>
      <tr>
-       <td><img src="/assets/posting/member_workout_start0.png" alt="Workout Start" width="200"/></td>
-       <td><img src="/assets/posting/custom_workout_exe.png" alt="Custom Workout Execution" width="200"/></td>
-       <td><img src="/assets/posting/custom_workout_summary.png" alt="Workout Summary" width="200"/></td>
-       <td><img src="/assets/posting/session_summary_custom.png" alt="Session Summary" width="200"/></td>
+       <td><img src="/assets/postings/member_workout_start0.png" alt="Workout Start" width="200"/></td>
+       <td><img src="/assets/postings/custom_workout_exe.png" alt="Custom Workout Execution" width="200"/></td>
+       <td><img src="/assets/postings/custom_workout_summary.png" alt="Workout Summary" width="200"/></td>
+       <td><img src="/assets/postings/session_summary_custom.png" alt="Session Summary" width="200"/></td>
      </tr>
    </table>
 
 4. **Trainer Experience**:
    <table>
      <tr>
-       <td><img src="/assets/posting/trainer_home.png" alt="Trainer Home" width="200"/></td>
-       <td><img src="/assets/posting/trainer_profile.png" alt="Trainer Profile" width="200"/></td>
-       <td><img src="/assets/posting/trainer_all_session.png" alt="Trainer All Sessions" width="200"/></td>
-       <td><img src="/assets/posting/trainer_workout_plan.png" alt="Trainer Workout Plan" width="200"/></td>
+       <td><img src="/assets/postings/trainer_home.png" alt="Trainer Home" width="200"/></td>
+       <td><img src="/assets/postings/trainer_profile.png" alt="Trainer Profile" width="200"/></td>
+       <td><img src="/assets/postings/trainer_all_session.png" alt="Trainer All Sessions" width="200"/></td>
+       <td><img src="/assets/postings/trainer_workout_plan.png" alt="Trainer Workout Plan" width="200"/></td>
      </tr>
    </table>
 
 5. **Custom Workout Creation**:
    <table>
      <tr>
-       <td><img src="/assets/posting/custom_workout_create.png" alt="Create Custom Workout" width="200"/></td>
-       <td><img src="/assets/posting/custom_workout_add.png" alt="Add Custom Workout" width="200"/></td>
-       <td><img src="/assets/posting/custom_workout_review_plan.png" alt="Review Custom Workout Plan" width="200"/></td>
-       <td><img src="/assets/posting/edit_workout_plan.png" alt="Edit Workout Plan" width="200"/></td>
+       <td><img src="/assets/postings/custom_workout_create.png" alt="Create Custom Workout" width="200"/></td>
+       <td><img src="/assets/postings/custom_workout_add.png" alt="Add Custom Workout" width="200"/></td>
+       <td><img src="/assets/postings/custom_workout_review_plan.png" alt="Review Custom Workout Plan" width="200"/></td>
+       <td><img src="/assets/postings/edit_workout_plan.png" alt="Edit Workout Plan" width="200"/></td>
      </tr>
    </table>
 
 6. **Profile Management**:
    <table>
      <tr>
-       <td><img src="/assets/posting/update_fitness_profile.png" alt="Update Fitness Profile" width="200"/></td>
-       <td><img src="/assets/posting/update_member_info.png" alt="Update Member Info" width="200"/></td>
-       <td><img src="/assets/posting/member_profile_imperial.png" alt="Member Profile Imperial" width="200"/></td>
-       <td><img src="/assets/posting/member_profile_metric.png" alt="Member Profile Metric" width="200"/></td>
+       <td><img src="/assets/postings/update_fitness_profile.png" alt="Update Fitness Profile" width="200"/></td>
+       <td><img src="/assets/postings/update_member_info.png" alt="Update Member Info" width="200"/></td>
+       <td><img src="/assets/postings/member_profile_imperial.png" alt="Member Profile Imperial" width="200"/></td>
+       <td><img src="/assets/postings/member_profile_metric.png" alt="Member Profile Metric" width="200"/></td>
      </tr>
    </table>
 
@@ -204,7 +204,7 @@ class Quest(Base):
 
 <table>
   <tr>
-    <td><img src="/assets/posting/detailed-database-schema-svg.png" alt="Detailed Database Schema" width="1000"/></td>
+    <td><img src="/assets/postings/detailed-database-schema-svg.png" alt="Detailed Database Schema" width="1000"/></td>
   </tr>
 </table>
 
